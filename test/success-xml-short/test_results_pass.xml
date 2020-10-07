@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+  <testsuite name="OpenClusterManagementE2E Suite" tests="17" failures="0" errors="0" time="297.644">
+      <testcase name="Given a hub cluster web console should allow the user to login to web console" classname="OpenClusterManagementE2E Suite" time="6.309771802"></testcase>
+      <testcase name="Given a hub cluster web console when the user is already authenticated should allow the user to view the Overview" classname="OpenClusterManagementE2E Suite" time="8.411371591"></testcase>
+      <testcase name="Given a hub cluster web console when the user is already authenticated should allow the user to view the Cluster Overview" classname="OpenClusterManagementE2E Suite" time="21.100027733"></testcase>
+      <testcase name="Given a hub cluster web console when the user is already authenticated should allow the user to import the local cluster" classname="OpenClusterManagementE2E Suite" time="10.504652981"></testcase>
+      <testcase name="Given a hub cluster web console when the user is already authenticated should allow the user to view the Search Engine" classname="OpenClusterManagementE2E Suite" time="5.144586418"></testcase>
+      <testcase name="Given a hub cluster web console when the user is already authenticated should allow the user to view the Visual Web Terminal" classname="OpenClusterManagementE2E Suite" time="6.463503351"></testcase>
+      <testcase name="Given a hub cluster web console when the user is already authenticated should allow the user to view Applications" classname="OpenClusterManagementE2E Suite" time="9.371711351"></testcase>
+      <testcase name="Given a hub cluster web console when the user is already authenticated should allow the user to view Policies" classname="OpenClusterManagementE2E Suite" time="7.131888511"></testcase>
+      <testcase name="Given a hub cluster web console when the user is already authenticated should have a button to create new Policies" classname="OpenClusterManagementE2E Suite" time="6.284677159"></testcase>
+      <testcase name="Given a hub cluster web console when the user is already authenticated should be able to create a simple policy" classname="OpenClusterManagementE2E Suite" time="17.042122558"></testcase>
+      <testcase name="Given a hub cluster web console when the user is already authenticated should have a ability to show Policy overview and details" classname="OpenClusterManagementE2E Suite" time="7.023951297"></testcase>
+      <testcase name="Given a hub cluster web console when the user is already authenticated should allow the user to view the Topology" classname="OpenClusterManagementE2E Suite" time="10.361606915"></testcase>
+      <testcase name="Manual import cluster should request the manual import of a cluster (manual-import-create)" classname="OpenClusterManagementE2E Suite" time="30.989309939"></testcase>
+      <testcase name="Manual import cluster should request the manual deletion of the imported cluster (manual-import-delete)" classname="OpenClusterManagementE2E Suite" time="150.598842055"></testcase>
+      <testcase name="Given a hub API should have the expected Deployments in namespace: open-cluster-management" classname="OpenClusterManagementE2E Suite" time="0.259836653"></testcase>
+      <testcase name="Given a hub API should have the expected Deployments in namespace: hive" classname="OpenClusterManagementE2E Suite" time="0.085553982"></testcase>
+      <testcase name="Given a hub API should be able to provision a cluster using hive" classname="OpenClusterManagementE2E Suite" time="0.02699686"></testcase>
+  </testsuite>

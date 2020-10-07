@@ -1,0 +1,16 @@
+{
+    "ignored_tests": [
+        {
+            "name": "Provider connections should be able to be created",
+            "owner": "search"
+        },
+        {
+            "name": "Search: Viewer is NOT able to edit configmaps",
+            "owner": "search"
+        },
+        {
+            "name": "Search: Search for secret",
+            "owner": "search"
+        }
+    ]
+}
