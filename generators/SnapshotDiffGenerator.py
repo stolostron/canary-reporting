@@ -141,6 +141,157 @@ class SnapshotDiffGenerator(AbstractGenerator.AbstractGenerator):
         self.diff = self.generate_component_diff(self.base_manifest, self.new_manifest)
 
 
+    def get_manifest(self, source_type, source, product_version, product_major_version, timestamp=None):
+        _loaded_manifest = {}
+        _loaded_manifest_name = None
+        if source_type == "local":
+            with open(source, "r") as f:
+                _loaded_manifest = json.load(f)
+            _loaded_manifest_name = source
+        else:
+            try:
+                _manifest = None
+                _branch = f"{product_major_version}-{source}"
+                if timestamp is None: # If we aren't given a specific timestamp, grab the latest
+                    _manifest = self.gh_repo.get_contents("snapshots", ref=_branch)
+                    _manifest = list(filter(lambda x: "manifest" in x.name and f"{product_version}" in x.name, _manifest))
+                    _manifest = sorted(_manifest, key = lambda manifest: manifest.name)
+                    if len(_manifest) == 0:
+                        raise RuntimeError(f"Didn't find any manifests in the snapshots directory of branch {_branch} in github.com/{self.github_org}/{self.github_repo}.")
+                    _manifest = _manifest[-1]
+                else: # Otherwise, grab a specific snapshot
+                    _manifest = self.gh_repo.get_contents("snapshots", ref=_branch)
+                    _manifest = list(filter(lambda x: x.name == f"manifest-{timestamp}-{product_version}.json", _manifest))
+                    if len(_manifest) != 1:
+                        raise RuntimeError(f"Didn't find any manifests in the snapshots directory of branch {_branch} in github.com/{self.github_org}/{self.github_repo} matching manifest-{timestamp}-{product_version}.json.")
+                    _manifest = _manifest[0]
+                _loaded_manifest = json.loads(_manifest.decoded_content)
+                _loaded_manifest_name = _manifest.name
+            except github.GithubException as ex:
+                print(f"ERROR - Encountered an issue while trying to pull manifests from github.com/{self.github_org}/{self.github_repo}/tree/{_branch}.  Please verify your stage and product version variables.  We recieved the follwing error messaage from the GitHub API:\n{ex}")
+                exit(1)
+        return _loaded_manifest, _loaded_manifest_name
+
+    
+    def generate_component_diff(self, base_manifest, new_manifest):
+        _diff = []
+        for _base_image in base_manifest:
+            # get a list of all images from the base manifest and filter for matching repository/image-name pairs
+            _new_matches = list(filter(lambda _new_repo_type: _new_repo_type["git-repository"] == _base_image["git-repository"] and _new_repo_type["image-name"] == _base_image["image-name"], new_manifest))
+            if len(_new_matches) < 1:
+                # if there is no match (< 1 results that match), then either it was deleted or an error occurred
+                _diff.append({
+                    "image-name": _base_image["image-name"],
+                    "git-repository": _base_image["git-repository"],
+                    "image-remote": _base_image["image-remote"],
+                    "operation": "deleted",
+                    "base": _base_image,
+                    "new": SnapshotDiffGenerator.nullary_element
+                })
+            elif len(_new_matches) > 1:
+                # if there is more than one match, that's a problem, we check unique identifiers, mark the duplicate
+                _diff.append({
+                    "image-name": _base_image["image-name"],
+                    "git-repository": _base_image["git-repository"],
+                    "image-remote": _base_image["image-remote"],
+                    "operation": "duplicate",
+                    "base": _base_image,
+                    "new": _new_matches
+                })
+            elif len(_new_matches) == 1 and _new_matches[0]["git-sha256"] != _base_image["git-sha256"]:
+                # if there is one matching image but the shas don't match, image was updated
+                _diff.append({
+                    "image-name": _base_image["image-name"],
+                    "git-repository": _base_image["git-repository"],
+                    "image-remote": _base_image["image-remote"],
+                    "operation": "modified",
+                    "base": _base_image,
+                    "new": _new_matches[0]
+                })
+        for _new_image in new_manifest:
+            # get a list of all images from the new manifest and filter for matching repository/image-name pairs
+            _base_matches = list(filter(lambda _base_repo_type: _base_repo_type["git-repository"] == _new_image["git-repository"] and _base_repo_type["image-name"] == _new_image["image-name"], base_manifest))
+            if len(_base_matches) < 1:
+                # if there is no match (< 1 results that match), then the component is new to our new manifest
+                _diff.append({
+                    "image-name": _new_image["image-name"],
+                    "git-repository": _new_image["git-repository"],
+                    "image-remote": _new_image["image-remote"],
+                    "operation": "added",
+                    "base": SnapshotDiffGenerator.nullary_element,
+                    "new": _new_image
+                })
+        return _diff
+
+
+    def load_commits_for_diff(self):
+        for _component in self.diff:
+            _component["details"] = self.load_commits_for_image(_component)
+
+    
+    def load_commits_for_image(self, component):
+        _gh_artifacts = {}
+        if component['operation'] == 'modified':
+            # derive org/repo from the image name from the manifest entry
+            _org_name, _image_name = component['git-repository'].split("/")
+            _org = self.gh_client.get_organization(_org_name)
+            _repo = _org.get_repo(_image_name)
+
+            # grab commits from the cooresponding shas
+            _base_commit = _repo.get_commit(component['base']['git-sha256'])
+            _new_commit = _repo.get_commit(component['new']['git-sha256'])
+
+            _gh_artifacts = {
+                "comapare-url": f"https://github.com/{_org}/{_repo}/compare/{component['base']['git-sha256']}..{component['new']['git-sha256']}",
+                "success": True
+            }
+
+            # walk the tree from the newest commit back up to the oldest commit.  
+            # we have to do this because the github api has no git log like behavior
+            # if we can't walk back up the tree, some branching nonsense has occurred that
+            # we don't care to accomodate, so skip this part.  
+            # 
+            # if we can get a path of commits, we can print each and try to link them to pull requests
+            # print(f"Walking the git tree from {_new_commit.commit.sha} to find all commits between it and {_base_commit.commit.sha}")
+            _commit_path = [_new_commit]
+            _iter_commit = _new_commit.parents[0]
+            _iter_max = 25
+            _iter_count = 0
+            while _iter_commit is not None and _iter_commit.sha != _base_commit.sha and _iter_count < _iter_max:
+                _commit_path.append(_iter_commit)
+                _iter_commit = _iter_commit.parents[0] if len(_iter_commit.parents) > 0 else None
+                _iter_count = _iter_count + 1
+            _commit_path.append(_base_commit)
+            if _iter_commit is None:
+                _commit_path = [_new_commit, _base_commit]
+                _gh_artifacts["success"] = False
+            _commit_list = []
+            for _commit in _commit_path:
+                _prs = []
+                for _pr in _commit.get_pulls():
+                    _pr_details = {
+                        "assignees": [],
+                        "title": _pr.title,
+                        "body": _pr.body,
+                        "html_url": _pr.html_url,
+                        "merged_at": str(_pr.merged_at),
+                        "merged_by": _pr.merged_by.name,
+                        "number": _pr.number
+                    }
+                    for assignee in _pr.assignees:
+                        _pr_details["assignees"].append(assignee.name)
+                    _prs.append(_pr_details)
+                _commit_list.append({
+                    "author": _commit.commit.author.name,
+                    "html_url": _commit.commit.html_url,
+                    "message": _commit.commit.message,
+                    "sha": _commit.commit.sha,
+                    "prs": _prs
+                })
+            _gh_artifacts["commits"] = _commit_list
+        return _gh_artifacts
+
+
     def diff_to_md(self):
         _md_diff = f"""
 # Diff Between `{self.base_manifest_name}` and `{self.new_manifest_name}`
@@ -293,154 +444,3 @@ Image Repo: {component['git-repository']}
 
 """
         return _t_diff
-
-
-    def get_manifest(self, source_type, source, product_version, product_major_version, timestamp=None):
-        _loaded_manifest = {}
-        _loaded_manifest_name = None
-        if source_type == "local":
-            with open(source, "r") as f:
-                _loaded_manifest = json.load(f)
-            _loaded_manifest_name = source
-        else:
-            try:
-                _manifest = None
-                _branch = f"{product_major_version}-{source}"
-                if timestamp is None: # If we aren't given a specific timestamp, grab the latest
-                    _manifest = self.gh_repo.get_contents("snapshots", ref=_branch)
-                    _manifest = list(filter(lambda x: "manifest" in x.name and f"{product_version}" in x.name, _manifest))
-                    _manifest = sorted(_manifest, key = lambda manifest: manifest.name)
-                    if len(_manifest) == 0:
-                        raise RuntimeError(f"Didn't find any manifests in the snapshots directory of branch {_branch} in github.com/{self.github_org}/{self.github_repo}.")
-                    _manifest = _manifest[-1]
-                else: # Otherwise, grab a specific snapshot
-                    _manifest = self.gh_repo.get_contents("snapshots", ref=_branch)
-                    _manifest = list(filter(lambda x: x.name == f"manifest-{timestamp}-{product_version}.json", _manifest))
-                    if len(_manifest) != 1:
-                        raise RuntimeError(f"Didn't find any manifests in the snapshots directory of branch {_branch} in github.com/{self.github_org}/{self.github_repo} matching manifest-{timestamp}-{product_version}.json.")
-                    _manifest = _manifest[0]
-                _loaded_manifest = json.loads(_manifest.decoded_content)
-                _loaded_manifest_name = _manifest.name
-            except github.GithubException as ex:
-                print(f"ERROR - Encountered an issue while trying to pull manifests from github.com/{self.github_org}/{self.github_repo}/tree/{_branch}.  Please verify your stage and product version variables.  We recieved the follwing error messaage from the GitHub API:\n{ex}")
-                exit(1)
-        return _loaded_manifest, _loaded_manifest_name
-
-    
-    def generate_component_diff(self, base_manifest, new_manifest):
-        _diff = []
-        for _base_image in base_manifest:
-            # get a list of all images from the base manifest and filter for matching repository/image-name pairs
-            _new_matches = list(filter(lambda _new_repo_type: _new_repo_type["git-repository"] == _base_image["git-repository"] and _new_repo_type["image-name"] == _base_image["image-name"], new_manifest))
-            if len(_new_matches) < 1:
-                # if there is no match (< 1 results that match), then either it was deleted or an error occurred
-                _diff.append({
-                    "image-name": _base_image["image-name"],
-                    "git-repository": _base_image["git-repository"],
-                    "image-remote": _base_image["image-remote"],
-                    "operation": "deleted",
-                    "base": _base_image,
-                    "new": SnapshotDiffGenerator.nullary_element
-                })
-            elif len(_new_matches) > 1:
-                # if there is more than one match, that's a problem, we check unique identifiers, mark the duplicate
-                _diff.append({
-                    "image-name": _base_image["image-name"],
-                    "git-repository": _base_image["git-repository"],
-                    "image-remote": _base_image["image-remote"],
-                    "operation": "duplicate",
-                    "base": _base_image,
-                    "new": _new_matches
-                })
-            elif len(_new_matches) == 1 and _new_matches[0]["git-sha256"] != _base_image["git-sha256"]:
-                # if there is one matching image but the shas don't match, image was updated
-                _diff.append({
-                    "image-name": _base_image["image-name"],
-                    "git-repository": _base_image["git-repository"],
-                    "image-remote": _base_image["image-remote"],
-                    "operation": "modified",
-                    "base": _base_image,
-                    "new": _new_matches[0]
-                })
-        for _new_image in new_manifest:
-            # get a list of all images from the new manifest and filter for matching repository/image-name pairs
-            _base_matches = list(filter(lambda _base_repo_type: _base_repo_type["git-repository"] == _new_image["git-repository"] and _base_repo_type["image-name"] == _new_image["image-name"], base_manifest))
-            if len(_base_matches) < 1:
-                # if there is no match (< 1 results that match), then the component is new to our new manifest
-                _diff.append({
-                    "image-name": _new_image["image-name"],
-                    "git-repository": _new_image["git-repository"],
-                    "image-remote": _new_image["image-remote"],
-                    "operation": "added",
-                    "base": SnapshotDiffGenerator.nullary_element,
-                    "new": _new_image
-                })
-        return _diff
-
-
-    def load_commits_for_diff(self):
-        for _component in self.diff:
-            _component["details"] = self.load_commits_for_image(_component)
-
-    
-    def load_commits_for_image(self, component):
-        _gh_artifacts = {}
-        if component['operation'] == 'modified':
-            # derive org/repo from the image name from the manifest entry
-            _org_name, _image_name = component['git-repository'].split("/")
-            _org = self.gh_client.get_organization(_org_name)
-            _repo = _org.get_repo(_image_name)
-
-            # grab commits from the cooresponding shas
-            _base_commit = _repo.get_commit(component['base']['git-sha256'])
-            _new_commit = _repo.get_commit(component['new']['git-sha256'])
-
-            _gh_artifacts = {
-                "comapare-url": f"https://github.com/{_org}/{_repo}/compare/{component['base']['git-sha256']}..{component['new']['git-sha256']}",
-                "success": True
-            }
-
-            # walk the tree from the newest commit back up to the oldest commit.  
-            # we have to do this because the github api has no git log like behavior
-            # if we can't walk back up the tree, some branching nonsense has occurred that
-            # we don't care to accomodate, so skip this part.  
-            # 
-            # if we can get a path of commits, we can print each and try to link them to pull requests
-            # print(f"Walking the git tree from {_new_commit.commit.sha} to find all commits between it and {_base_commit.commit.sha}")
-            _commit_path = [_new_commit]
-            _iter_commit = _new_commit.parents[0]
-            _iter_max = 25
-            _iter_count = 0
-            while _iter_commit is not None and _iter_commit.sha != _base_commit.sha and _iter_count < _iter_max:
-                _commit_path.append(_iter_commit)
-                _iter_commit = _iter_commit.parents[0] if len(_iter_commit.parents) > 0 else None
-                _iter_count = _iter_count + 1
-            _commit_path.append(_base_commit)
-            if _iter_commit is None:
-                _commit_path = [_new_commit, _base_commit]
-                _gh_artifacts["success"] = False
-            _commit_list = []
-            for _commit in _commit_path:
-                _prs = []
-                for _pr in _commit.get_pulls():
-                    _pr_details = {
-                        "assignees": [],
-                        "title": _pr.title,
-                        "body": _pr.body,
-                        "html_url": _pr.html_url,
-                        "merged_at": str(_pr.merged_at),
-                        "merged_by": _pr.merged_by.name,
-                        "number": _pr.number
-                    }
-                    for assignee in _pr.assignees:
-                        _pr_details["assignees"].append(assignee.name)
-                    _prs.append(_pr_details)
-                _commit_list.append({
-                    "author": _commit.commit.author.name,
-                    "html_url": _commit.commit.html_url,
-                    "message": _commit.commit.message,
-                    "sha": _commit.commit.sha,
-                    "prs": _prs
-                })
-            _gh_artifacts["commits"] = _commit_list
-        return _gh_artifacts
