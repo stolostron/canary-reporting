@@ -14,6 +14,16 @@ class GitHubIssueGenerator(AbstractGenerator.AbstractGenerator, ReportGenerator.
         return subparser_name, gh_parser
 
     
+    def generate_github_issue_from_args(args):
+        print("GitHub Issue Generation from args")
+        print("Printing details of invocation below.\n")
+        args_dict = vars(args)
+        print(f"Subparser {args.generator_name} called with arguments:")
+        for attr in args_dict.keys():
+            if attr != "func":
+                print(f"\t{attr}: {args_dict[attr]}")
+
+
     def generate_github_issue(args):
         print("GitHub Issue Generation")
         print("Printing details of invocation below.\n")
