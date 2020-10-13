@@ -1,3 +1,9 @@
+"""SnapshotDiffGenerator
+
+An AbstractGenerator implementation to generate a snapshot diff as part of the canary reporting CLI.  This class
+can generate its CLI parser, load args, generate a diff, and format the output diff including git artifacts. 
+"""
+
 from generators import AbstractGenerator
 import os, re, argparse, json, pprint, github, shutil
 
@@ -18,10 +24,29 @@ class SnapshotDiffGenerator(AbstractGenerator.AbstractGenerator):
         "image-key": "null"
     }
 
-    def __init__(self, base, base_repo_type, new, new_repo_type, base_timestamp, new_timestamp, base_product_version, new_product_version, github_token, 
+    def __init__(self, base, base_repo_type, new, new_repo_type, base_timestamp=None, new_timestamp=None, base_product_version=None, new_product_version=None, github_token=None, 
                     github_org='open-cluster-management', github_repo='pipeline', load_commits=True):
+        """Create a SnapshotDiffGenerator Object, populate the diff, and conditionally load GitHub artifacts.  
+
+        Required Arguments:
+        base      -- the base manifest descriptor, could be a stage in github_repo or a manifest filename
+        base_repo -- repo type for the base manifest.  Toggles between local file and github
+        new       -- the new manifest descriptor, could be a stage in github_repo or a manifest filename
+        new_repo  -- repo type for the new manifest.  Toggles between local file and github
+
+        Keyword Arguments:
+        base_timestamp       -- timestamp for the base manifest, only used on github type sources
+        new_timestamp        -- timestamp for the new manifest, only used on github type sources
+        base_product_version -- product version for the base manifest, only used on github type sources
+        new_product_version  -- product version for the new manifest, only used on github type sources
+        github_token    -- token used to access github, only used on github type sources
+        github_org      -- github organization to be used for manifest query, only used on github type sources
+        github_repo     -- github repo housing manifest files, only used on github type sources
+        load_commits    -- toggles github artifact query, will load commits & PRs if true
+        """
 
         # Necessary Parameterized Variables
+        self.load_commits = load_commits
         self.base = base
         self.base_repo_type = base_repo_type
         self.new = new
@@ -29,16 +54,16 @@ class SnapshotDiffGenerator(AbstractGenerator.AbstractGenerator):
         self.base_timestamp = base_timestamp
         self.new_timestamp = new_timestamp
         self.base_product_version = base_product_version
+        self.base_product_major_version = None
         if self.base_product_version is not None:
             self.base_product_major_version = re.search('([0-9]+\.[0-9]+)\.[0-9]+', self.base_product_version).group(1)
         self.new_product_version = new_product_version
+        self.new_product_major_version = None
         if self.new_product_version is not None:
             self.new_product_major_version = re.search('([0-9]+\.[0-9]+)\.[0-9]+', self.new_product_version).group(1)
-
         # Toggle git features on/off based on repo types (can't check for local)
         if self.base_repo_type == "local" or self.new_repo_type == "local":
             self.load_commits = False
-
         # We only need git creds if the user wants us to source files from git.
         if self.base_repo_type == "github" or self.new_repo_type == "github":
             self.github_token = github_token
@@ -50,23 +75,26 @@ class SnapshotDiffGenerator(AbstractGenerator.AbstractGenerator):
             self.gh_client = github.Github(self.github_token)
             self.gh_organization = self.gh_client.get_organization(self.github_org)
             self.gh_repo = self.gh_organization.get_repo(self.github_repo)
-
         # Operational/Class Variables
         self.diff = []
         self.base_manifest_name = None
         self.base_manifest = []
         self.new_manifest_name = None
         self.new_manifest = []
-
         # Load our manifests and diff
         self.generate_snapshot_diff()
-
         # Load GitHub commits and PRs if requested
-        if load_commits:
+        if self.load_commits:
             self.load_commits_for_diff()
 
 
     def generate_subparser(subparser):
+        """Static method to generate a subparser for the SnapshotDiffGenerator module.  
+
+        Required Argument:
+        subparser -- an argparse.ArgumentParser object to extend with a new subparser.  
+        """
+
         subparser_name = 'sd'
         sd_parser = subparser.add_parser(subparser_name, help="Generate a rich diff/delta between two snapshots from a given pipeline repository and branch.")
         sd_parser.add_argument('base', metavar='base',
@@ -100,12 +128,26 @@ class SnapshotDiffGenerator(AbstractGenerator.AbstractGenerator):
 
     
     def product_version_type(arg, pattern=re.compile('[0-9]+\.[0-9]+\.[0-9]+')):
+        """Validate that an argument, arg, is in the format pattern.
+        
+        Required Argument:
+        arg -- the argument to validate against our regex
+
+        Keyword Argument:
+        pattern -- a regex pattern to apply to arg and raise an ArgumentTypeError if the parameter does not match.  Defaults to X.Y.Z.  
+        """
         if not pattern.match(arg):
             raise argparse.ArgumentTypeError("...product_version parameters must be specified in the format X.Y.Z to match the regex '[0-9]+\.[0-9]+\.[0-9]+'")
         return arg
 
 
     def generate_snapshot_diff_from_args(args):
+        """Static method to create a SnapshotDiffGenerator object and generates a diff in the correct format from command-line args.  
+
+        Required Argument:
+        args -- argparse-generated arguments from an argparse with a parser generated by SnapshotDiffGenerator.generate_subparser()
+        """
+
         generator = SnapshotDiffGenerator(
             base=args.base,
             base_repo_type=args.base_repo,
@@ -136,12 +178,25 @@ class SnapshotDiffGenerator(AbstractGenerator.AbstractGenerator):
 
 
     def generate_snapshot_diff(self):
+        """Macro function to generate our manifest objects and generate a diff dict."""
+
         self.base_manifest, self.base_manifest_name = self.get_manifest(self.base_repo_type, self.base, self.base_product_version, self.base_product_major_version, self.base_timestamp)
         self.new_manifest, self.new_manifest_name = self.get_manifest(self.new_repo_type, self.new, self.new_product_version, self.new_product_major_version, self.new_timestamp)
         self.diff = self.generate_component_diff(self.base_manifest, self.new_manifest)
 
 
-    def get_manifest(self, source_type, source, product_version, product_major_version, timestamp=None):
+    def get_manifest(self, source_type, source, product_version=None, product_major_version=None, timestamp=None):
+        """Pulls a specific manifest from source based on the source_type configured, loads as JSON.
+
+        Required Arguments:
+        source_type -- source of the manifest, toggles between github and local
+        source      -- manifest stage, either a filename for local or a timestamp for github-sourced
+        product_version         -- X.Y.Z version of the product represented by the target manfiest
+        product_major_version   -- X.Y version of the product represented by the target manifest
+
+        Keyword Arguments:
+        timestamp -- timestamp of the specific manifest to pull, latest snapshot from soruce is pulled if empty
+        """
         _loaded_manifest = {}
         _loaded_manifest_name = None
         if source_type == "local":
@@ -174,6 +229,12 @@ class SnapshotDiffGenerator(AbstractGenerator.AbstractGenerator):
 
     
     def generate_component_diff(self, base_manifest, new_manifest):
+        """Generate a dict respresenting the difference between two manifests.  
+
+        Required Arguments:
+        base_manifest -- "base" manifest for the diff, this is our "old" state so we'll note differences compared to this manifest 
+        new_manifest  -- "new" manifest for the diff, this is our new state so we'll compare this state to the "base"
+        """
         _diff = []
         for _base_image in base_manifest:
             # get a list of all images from the base manifest and filter for matching repository/image-name pairs
@@ -225,11 +286,17 @@ class SnapshotDiffGenerator(AbstractGenerator.AbstractGenerator):
 
 
     def load_commits_for_diff(self):
+        """Loop through all components in the diff object and annotate github artifacts."""
         for _component in self.diff:
             _component["details"] = self.load_commits_for_image(_component)
 
     
     def load_commits_for_image(self, component):
+        """Generate a dict representing the commits, PRs, and metadata for a given component's diff.
+
+        Required Argument:
+        component -- A dict representation of a component's diff between some base and new state to operate on
+        """
         _gh_artifacts = {}
         if component['operation'] == 'modified':
             # derive org/repo from the image name from the manifest entry
@@ -292,7 +359,34 @@ class SnapshotDiffGenerator(AbstractGenerator.AbstractGenerator):
         return _gh_artifacts
 
 
+    def diff_to_dict(self):
+        """Return our underlying dict representation of the diff"""
+        return self.diff
+
+
+    def diff_to_json(self):
+        """Convert our diff object into a json string."""
+        return json.dumps(self.diff)
+
+
+    def diff_to_sha(self):
+        """Convert our diff object into a sha-focused string."""
+        _sha_diff = ""
+        for component in self.diff:
+            if component['operation'] == "modified":
+                _sha_diff = _sha_diff + f"{component['base']['git-sha256']}..{component['new']['git-sha256']}\t{component['image-name']}\n"
+            elif component['operation'] == "deleted":
+                _sha_diff = _sha_diff + f"{component['base']['git-sha256']}..deleted\t{component['image-name']}\n"
+            elif component['operation'] == "added":
+                _sha_diff = _sha_diff + f"missing..{component['new']['git-sha256']}\t{component['image-name']}\n"
+            elif component['operation'] == "duplicate":
+                _sha_diff = _sha_diff + f"duplicate detected\t{component['image-name']}\n"
+        return _sha_diff
+
+
     def diff_to_md(self):
+        """Convert our diff object into a markdown string."""
+
         _md_diff = f"""
 # Diff Between `{self.base_manifest_name}` and `{self.new_manifest_name}`
 
@@ -367,25 +461,10 @@ Merged at {pr['merged_at']} by {pr['merged_by']}
 """
         return _md_diff
 
-    
-    def diff_to_json(self):
-        return json.dumps(self.diff)
-
-
-    def diff_to_sha(self):
-        _sha_diff = ""
-        for component in self.diff:
-            if component['operation'] == "modified":
-                _sha_diff = _sha_diff + f"{component['image-name']}: {component['base']['git-sha256']}..{component['new']['git-sha256']}\n"
-            elif component['operation'] == "deleted":
-                _sha_diff = _sha_diff + f"{component['image-name']}: {component['base']['git-sha256']}..deleted\n"
-            elif component['operation'] == "added":
-                _sha_diff = _sha_diff + f"{component['image-name']}: missing..{component['new']['git-sha256']}\n"
-            elif component['operation'] == "duplicate":
-                _sha_diff = _sha_diff + f"{component['image-name']}: duplicate detected\n"
-        return _sha_diff
 
     def diff_to_terminal(self):
+        """Convert our diff object into a user-friendly terminal string."""
+
         col, rows = shutil.get_terminal_size((80, 20))
         _t_diff = f"""
 > Diff Between `{self.base_manifest_name}` and `{self.new_manifest_name}`
