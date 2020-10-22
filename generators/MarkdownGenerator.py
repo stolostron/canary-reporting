@@ -18,6 +18,7 @@ class MarkdownGenerator(AbstractGenerator.AbstractGenerator, ReportGenerator.Rep
         for attr in args_dict.keys():
             if attr != "func":
                 print(f"\t{attr}: {args_dict[attr]}")
+        
 
 # """generate_md.py
 

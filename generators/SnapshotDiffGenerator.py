@@ -122,7 +122,7 @@ class SnapshotDiffGenerator(AbstractGenerator.AbstractGenerator):
         sd_parser.add_argument('-r', '--github-repo', default='pipeline',
             help="Name of the GitHub repo to pull manifests from.  Defaults to 'pipeline'.")
         sd_parser.add_argument('--github-token', default=os.getenv('GITHUB_TOKEN'),
-            help="GitHub token for access to pull manifests from pipeline repo.  Pulls from teh GITHUB_TOKEN environment variable if not specified.")
+            help="GitHub token for access to pull manifests from pipeline repo.  Pulls from the GITHUB_TOKEN environment variable if not specified.")
         sd_parser.set_defaults(func=SnapshotDiffGenerator.generate_snapshot_diff_from_args)
         return subparser_name, sd_parser
 

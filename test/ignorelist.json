@@ -1,0 +1,34 @@
+{
+    "ignored_tests": [
+            {
+                "name": "Search using filters Search using \"suspend\" filter should filter by next suggestion",
+                "squad": "search",
+                "owner": "@jlpadilla"
+            },
+            {
+                "name": "Search in Managed Cluster create namespace and deployment resources should see pod logs'",
+                "squad": "search",
+                "owner": "@jlpadilla"
+            },
+            {
+                "name": "Search in Managed Cluster create namespace and deployment resources \"before each\" hook for \"should have expected count of resource tiles\"",
+                "squad": "search",
+                "owner": "@jlpadilla"
+            },
+            {
+                "name": "Search using filters Search using \"suspend\" filter should filter by next suggestion",
+                "squad": "search",
+                "owner": "@jlpadilla"
+            },
+            {
+                "name": "Search in Local Cluster create namespace and deployment resources should delete pod",
+                "squad": "search",
+                "owner": "@jlpadilla"
+            },
+            {
+                "name": "Search using filters Search using \"architecture\" filter should filter by next suggestion",
+                "squad": "search",
+                "owner": "@jlpadilla"
+            }
+    ]
+}
