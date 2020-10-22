@@ -1,23 +1,63 @@
+import os, sys, json
 from generators import AbstractGenerator,ReportGenerator
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+from datamodel import ResultsAggregator
 
 class SlackGenerator(AbstractGenerator.AbstractGenerator, ReportGenerator.ReportGenerator):
+
+
+    def __init__(self, results_dirs, snapshot=None, branch=None, stage=None, hub_version=None, 
+        hub_platform=None, import_version=None, import_platform=None, job_url=None, build_id=None, ignorelist=[]):
+        self.snapshot = snapshot
+        self.branch = branch
+        self.stage = stage
+        self.hub_version = hub_version
+        self.hub_platform = hub_platform
+        self.import_version = import_version
+        self.import_platform = import_platform
+        self.job_url = job_url
+        self.build_id = build_id
+        self.ignorelist = ignorelist
+        self.results_files = []
+        for _results_dir in results_dirs:
+            _files_list = os.listdir(_results_dir)
+            for _f in _files_list:
+                _full_path = os.path.join(_results_dir, _f)
+                if os.path.isfile(_full_path) and _full_path.endswith('.xml'):
+                    self.results_files.append(_full_path)
+        self.aggregated_results = ResultsAggregator.ResultsAggregator(files=self.results_files)
+        print(json.dumps(self.aggregated_results.get_raw_results()))
+
 
     def generate_subparser(subparser):
         subparser_name = 'sl'
         sl_parser = subparser.add_parser(subparser_name, parents=[ReportGenerator.ReportGenerator.generate_parent_parser()],
             help="Generate a formatted Slack message json payload based on input JUnit XML test results.")
-        sl_parser.set_defaults(func=SlackGenerator.generate_slack_report)
+        sl_parser.set_defaults(func=SlackGenerator.generate_slack_report_from_args)
         return subparser_name, sl_parser
 
 
-    def generate_slack_report(args):
-        print("Slack Message Generation")
-        print("Printing details of invocation below.\n")
-        args_dict = vars(args)
-        print(f"Subparser {args.generator_name} called with arguments:")
-        for attr in args_dict.keys():
-            if attr != "func":
-                print(f"\t{attr}: {args_dict[attr]}")
+    def generate_slack_report_from_args(args):
+        # print("Slack Message Generation")
+        # print("Printing details of invocation below.\n")
+        # args_dict = vars(args)
+        # print(f"Subparser {args.generator_name} called with arguments:")
+        # for attr in args_dict.keys():
+        #     if attr != "func":
+        #         print(f"\t{attr}: {args_dict[attr]}")
+        _ignorelist = []
+        if args.ignore_list is not None and os.path.isfile(args.ignore_list):
+            try:
+                with open(args.ignore_list, "r+") as f:
+                    _il = json.loads(f)
+                    _ignorelist = _il['ignored_tests']
+            except json.JSONDecodeError as ex:
+                print(f"Ignorelist found in {args.ignore_list} was not in JSON format, ignoring the ignorelist. Ironic.")
+        _generator = SlackGenerator(args.results_directory, snapshot=args.snapshot, branch=args.branch, stage=args.stage,
+            hub_version=args.hub_version, hub_platform=args.hub_platform, import_version=args.import_version, import_platform=args.import_platform,
+            job_url=args.job_url, build_id=args.build_id, ignorelist=_ignorelist)
+
+
 
 # """generate_slack_message.py
 
