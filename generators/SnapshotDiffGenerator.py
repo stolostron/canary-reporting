@@ -96,7 +96,27 @@ class SnapshotDiffGenerator(AbstractGenerator.AbstractGenerator):
         """
 
         subparser_name = 'sd'
-        sd_parser = subparser.add_parser(subparser_name, help="Generate a rich diff/delta between two snapshots from a given pipeline repository and branch.")
+        sd_parser = subparser.add_parser(subparser_name, 
+            formatter_class=argparse.RawTextHelpFormatter,
+            help="Generate a rich diff/delta between two snapshots from a given pipeline repository and branch.",
+            epilog="""
+Example Usages:
+
+    Get a simple diff between two snapshots from integration:
+        python3 reporter.py sd integration integration --base-timestamp 2020-10-21-03-13-21 --new-timestamp 2020-10-22-07-20-54
+
+    View the same diff in brief sha form: 
+        python3 reporter.py sd integration integration --base-timestamp 2020-10-21-03-13-21 --new-timestamp 2020-10-22-07-20-54 -o sha
+
+    Get a diff for a specific product version:
+        python3 reporter.py sd integration integration --base-timestamp 2020-10-21-03-13-21 --new-timestamp 2020-10-22-07-20-54 --base-product-version 2.1.0 --new-product-version 2.1.0
+
+    Generate a diff from a local file:
+        python3 reporter.py sd oldmanifest.json newmanifest.json --base-repo local --new-repo local
+
+    Generate a markdown diff and output it to a file:
+        python3 reporter.py sd integration integration --base-timestamp 2020-10-21-03-13-21 --new-timestamp 2020-10-22-07-20-54 -o md --output-file diff.md
+""")
         sd_parser.add_argument('base', metavar='base',
             help="Our 'base' manifest specificaiton.  By default it will look for a GitHub branch named <base> on the specified repo and org. If --base-repo=local is specified, we'll use this as a filepath to a local manifest file instead.")
         sd_parser.add_argument('--base-repo', choices=['github', 'local'], default="github",
