@@ -210,8 +210,8 @@ class ResultsAggregator():
         _meta = {}
         _meta['message'] =  ResultsAggregator.get_case_message_xml(case)
         _meta['filename'] = os.path.basename(filename)
-        _info = re.findall("\[(.*?)\]", matchResultsAggregator.get_case_name_xml(case)) 
-        if _info is not None:
+        _info = re.findall("\[(.*?)\]", ResultsAggregator.get_case_name_xml(case)) 
+        if _info:
             _meta['priority'] = _info[0]
             _meta['severity'] = _info[1]
             _meta['squad(s)'] = _info[2]
