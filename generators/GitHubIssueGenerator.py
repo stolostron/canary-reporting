@@ -1,4 +1,5 @@
 import os, sys, json
+from github import Github, UnknownObjectException
 from generators import AbstractGenerator,ReportGenerator
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 from datamodel import ResultsAggregator as ra
@@ -57,9 +58,9 @@ class GitHubIssueGenerator(AbstractGenerator.AbstractGenerator, ReportGenerator.
         subparser_name = 'gh'
         gh_parser = subparser.add_parser(subparser_name, parents=[ReportGenerator.ReportGenerator.generate_parent_parser()],
             help="Generate a GitHub issue on a given GitHub repo with artifacts from input JUnit XML tests if a failure is detected.")
-        gh_parser.add_argument('--github-organization', default="open-cluster-management",
+        gh_parser.add_argument('--github-organization', nargs=1, default=["open-cluster-management"],
             help="GitHub organization to open an issue against if a failing test is detected.  Defaults to open-cluster-management.")
-        gh_parser.add_argument('-r', '--repo', nargs=1, default="backlog",
+        gh_parser.add_argument('-r', '--repo', nargs=1, default=["backlog"],
             help="GitHub repo to open an issue against if a failing test is detected.  Defaults to 'backlog'.")
         gh_parser.add_argument('--github-token', nargs=1, default=os.getenv('GITHUB_TOKEN'),
             help="GitHub token for access to create GitHub issues.  Pulls from teh GITHUB_TOKEN environment variable if not specified.")
@@ -77,8 +78,10 @@ class GitHubIssueGenerator(AbstractGenerator.AbstractGenerator, ReportGenerator.
             help="URL of the S3 bucket containing must-gather artifacts.")
         gh_parser.add_argument('-o', '--output-file',
             help="If provided - GitHub issue contents will be mirrored to the input filename.")
-        gh_parser.add_argument('--dry-run',
+        gh_parser.add_argument('-dr', '--dry-run', action='store_true',
             help="If provided - an actual GitHub issue will not be created, but the file will be generated, best used with -o.")
+        gh_parser.add_argument('-t', '--tags', action='append',
+            help="GitHub issue tags to apply to the created issue.  Only applied if the tags exist on the target repository.")
         gh_parser.set_defaults(func=GitHubIssueGenerator.generate_github_issue_from_args)
         return subparser_name, gh_parser
 
@@ -103,6 +106,32 @@ class GitHubIssueGenerator(AbstractGenerator.AbstractGenerator, ReportGenerator.
                 f.write(_message)
         else:
             print(_message)
+        if not args.dry_run:
+            try:
+                g = Github(args.github_token)
+                org = g.get_organization(args.github_organization[0])
+                repo = org.get_repo(args.repo[0])
+            except UnknownObjectException as ex:
+                print("Failed login to GitHub or find org/repo.  See error below for additional details:")
+                print(ex)
+                exit(1)
+            _tags = []
+            if args.tags:
+                for tag in args.tags:
+                    try:
+                        _tags.append(repo.get_label(tag))
+                    except UnknownObjectException as ex:
+                        print(f"Couldn't find GitHub Tag {tag}, skipping and continuing.")
+                        pass
+            _issue = repo.create_issue(_generator.generate_issue_title(), body=_message, labels=_tags)
+            print(_issue.html_url)
+        else:
+            print("--dry-run as been set, skipping git issue creation")
+            print(f"GitHub issue would've been created on github.com/{args.github_organization[0]}/{args.repo[0]}.")
+            if args.tags:
+                print("We would attempt to apply the following tags:")
+                for tag in args.tags:
+                    print(f"* {tag}")
 
     
     def generate_github_issue(self):
@@ -114,6 +143,18 @@ class GitHubIssueGenerator(AbstractGenerator.AbstractGenerator, ReportGenerator.
         _report = _report + self.generate_body() + "\n"
         # Create GitHub Issue with generated report body
         return _report
+
+
+    def generate_issue_title(self):
+        _header = ""
+        if self.branch is not None:
+            _header = _header + f"[{self.branch.capitalize()}] "
+        _header = _header + f"CICD Canary Build Failure"
+        if self.snapshot is not None:
+            _header = _header + f" for {self.snapshot}"
+        if self.stage is not None:
+            _header = _header + f" During the {self.stage.capitalize()} Stage"
+        return _header
 
 
     def generate_header(self):
@@ -146,13 +187,20 @@ class GitHubIssueGenerator(AbstractGenerator.AbstractGenerator, ReportGenerator.
             # Add a link to the snapshot diff
             if self.sd_url is not None:
                 _metadata = _metadata + f"[**Snapshot Diff**]({self.sd_url})\n\n"
-            # Add a hub + import verion where available
-            if self.hub_version is not None and self.import_version is not None:
-                _metadata = _metadata + f"**Hub Cluster Version:** {self.hub_version}\n\n**Import Cluster Version:** {self.import_version}\n\n"
+            # Add hub cluster details where available
+            if self.hub_platform is not None and self.hub_version is not None:
+                _metadata = _metadata + f"**Hub Cluster Platform:** {self.hub_platform}    **Hub Cluster Version:** {self.hub_version}\n\n"
             elif self.hub_version is not None:
                 _metadata = _metadata + f"**Hub Cluster Version:** {self.hub_version}\n\n"
+            elif self.hub_platform is not None:
+                _metadata = _metadata + f"**Hub Cluster Platform:** {self.hub_platform}\n\n"
+            # Add import cluster details where available
+            if self.import_platform is not None and self.import_version is not None:
+                _metadata = _metadata + f"**Import Cluster Platform:** {self.import_platform}    **Import Cluster Version:** {self.import_version}\n\n"
             elif self.import_version is not None:
                 _metadata = _metadata + f"**Import Cluster Version:** {self.import_version}\n\n"
+            elif self.import_platform is not None:
+                _metadata = _metadata + f"**Import Cluster Platform:** {self.import_platform}\n\n"
         return _metadata
 
 
