@@ -21,8 +21,6 @@ class ResultsAggregator():
         }
         for f in files:
             self.load_file(f)
-        print(str(self.__results))
-
 
     def get_raw_results(self):
         return {
