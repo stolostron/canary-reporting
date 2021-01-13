@@ -28,7 +28,9 @@ class GitHubIssueGenerator(AbstractGenerator.AbstractGenerator, ReportGenerator.
 
     def __init__(self, results_dirs, snapshot=None, branch=None, stage=None, hub_version=None, 
         hub_platform=None, import_version=None, import_platform=None, job_url=None, build_id=None,
-        sd_url=None, md_url=None, must_gather_url=None, results_url=None, ignorelist=[], passing_quality_gate=100, executed_quality_gate=100):
+        sd_url=None, md_url=None, must_gather_url=None, results_url=None, ignorelist=[], 
+        passing_quality_gate=100, executed_quality_gate=100, github_token=os.getenv('GITHUB_TOKEN'), github_org=["open-cluster-management"],
+        github_repo=["cicd-staging"], tags=[], dry_run=True, output_file="github.md"):
         self.snapshot = snapshot
         self.branch = branch
         self.stage = stage
@@ -46,6 +48,12 @@ class GitHubIssueGenerator(AbstractGenerator.AbstractGenerator, ReportGenerator.
         self.passing_quality_gate = passing_quality_gate
         self.executed_quality_gate = executed_quality_gate
         self.results_files = []
+        self.github_token = github_token
+        self.github_org = github_org
+        self.github_repo = github_repo
+        self.tags = tags
+        self.dry_run = dry_run
+        self.output_file = output_file
         for _results_dir in results_dirs:
             _files_list = os.listdir(_results_dir)
             for _f in _files_list:
@@ -99,42 +107,45 @@ class GitHubIssueGenerator(AbstractGenerator.AbstractGenerator, ReportGenerator.
             hub_version=args.hub_version, hub_platform=args.hub_platform, import_version=args.import_version, import_platform=args.import_platform,
             job_url=args.job_url, build_id=args.build_id, ignorelist=_ignorelist, sd_url=args.snapshot_diff_url,
             md_url=args.markdown_url, executed_quality_gate=int(args.executed_quality_gate), passing_quality_gate=int(args.passing_quality_gate),
-            results_url=args.results_url, must_gather_url=args.must_gather_url)
-        _message = _generator.generate_github_issue()
-        if args.output_file is not None:
-            with open(args.output_file, "w+") as f:
+            results_url=args.results_url, must_gather_url=args.must_gather_url, github_token=args.github_token, github_org=args.github_organization,
+            github_repo=args.repo, tags=args.tags, dry_run=args.dry_run, output_file=args.output_file)
+        _message = _generator.open_github_issue()
+
+    
+    def open_github_issue(self):
+        _message = self.generate_github_issue_body()
+        if self.output_file is not None:
+            with open(self.output_file, "w+") as f:
                 f.write(_message)
-        else:
-            print(_message)
-        if not args.dry_run:
+        if not self.dry_run:
             try:
-                g = Github(args.github_token)
-                org = g.get_organization(args.github_organization[0])
-                repo = org.get_repo(args.repo[0])
+                g = Github(self.github_token)
+                org = g.get_organization(self.github_org[0])
+                repo = org.get_repo(self.github_repo[0])
             except UnknownObjectException as ex:
                 print("Failed login to GitHub or find org/repo.  See error below for additional details:")
                 print(ex)
                 exit(1)
             _tags = []
-            if args.tags:
-                for tag in args.tags:
+            if self.tags:
+                for tag in self.tags:
                     try:
                         _tags.append(repo.get_label(tag))
                     except UnknownObjectException as ex:
                         print(f"Couldn't find GitHub Tag {tag}, skipping and continuing.")
                         pass
-            _issue = repo.create_issue(_generator.generate_issue_title(), body=_message, labels=_tags)
+            _issue = repo.create_issue(self.generate_issue_title(), body=_message, labels=_tags)
             print(_issue.html_url)
         else:
             print("--dry-run as been set, skipping git issue creation")
-            print(f"GitHub issue would've been created on github.com/{args.github_organization[0]}/{args.repo[0]}.")
-            if args.tags:
+            print(f"GitHub issue would've been created on github.com/{self.github_org[0]}/{self.github_repo[0]}.")
+            if self.tags:
                 print("We would attempt to apply the following tags:")
-                for tag in args.tags:
+                for tag in self.tags:
                     print(f"* {tag}")
 
     
-    def generate_github_issue(self):
+    def generate_github_issue_body(self):
         # Generate GitHub Issue Test
         _report = ""
         _report = _report + self.generate_header() + "\n"
@@ -238,16 +249,6 @@ class GitHubIssueGenerator(AbstractGenerator.AbstractGenerator, ReportGenerator.
         _summary = _summary + f"**{GitHubIssueGenerator.status_symbols[ra.ResultsAggregator.ignored]} {_ignored} " + ("Failure" if _ignored == 1 else "Failures") +  " Ignored**\n\n"
         _summary = _summary + f"**{GitHubIssueGenerator.status_symbols[ra.ResultsAggregator.skipped]} {_skipped} Test " + ("Case" if _skipped == 1 else "Cases") + " Skipped**\n\n"
         return _summary
-
-
-    def generate_table(self):
-        _table = "## Test Case Summary\n\n"
-        _table = _table + "|Results|Testsuite|Test|\n"
-        _table = _table + "|---|---|---|\n"
-        _results = self.aggregated_results.get_results()
-        for _result in _results:
-            _table = _table + f"| {GitHubIssueGenerator.status_symbols[_result['state']]} | {_result['testsuite']} | {_result['name']} |\n"
-        return _table
 
     
     def generate_body(self):
