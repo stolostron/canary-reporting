@@ -1,3 +1,11 @@
+# Custom
+test_md.sh
+test_slack.sh
+test_git_issue.sh
+slack-message.json
+out.md
+out.github
+
 # Recommended gitignore for python projects from https://github.com/github/gitignore/blob/master/Python.gitignore
 
 # Byte-compiled / optimized / DLL files

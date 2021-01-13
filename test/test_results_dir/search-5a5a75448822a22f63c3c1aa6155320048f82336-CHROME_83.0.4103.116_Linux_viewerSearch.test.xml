@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites errors="1"
+            failures="1"
+            tests="2">
+
+  <testsuite name="viewerSearch.test"
+    errors="1" failures="1" hostname="" id="" package="viewerSearch.test" skipped="0"
+    tests="2" time="61.09" timestamp="">
+  
+    <testcase name="Search: Load page" classname="viewerSearch.test" time="0.03000" assertions="2">
+
+    
+
+    
+    </testcase>
+  
+    <testcase name="Search: Viewer is NOT able to edit configmaps" classname="viewerSearch.test" time="61.06" assertions="9">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+      <failure message="Timed out while waiting for element &lt;.react-tags&gt; to be present for 30000 milliseconds. - expected [0;32m&#34;found&#34;[0m but got: [0;31m&#34;not found&#34;[0m [0;90m(30035ms)[0m">    at Page.enterTextInSearchbar (/tests/page-objects/SearchPage.js:73:8)
+    at Object.Search: Viewer is NOT able to edit configmaps (/tests/e2e/viewerSearch.test.js:41:16)</failure>
+<system-out>[[ATTACHMENT|/test-output/e2e/screenshots/viewerSearch.test/Search:-Viewer-is-NOT-able-to-edit-configmaps_FAILED_Jun-24-2020-121851-GMT+0000-(Coordinated-Universal.png]]</system-out>
+    
+      <failure message="    at Page.enterTextInSearchbar (/tests/page-objects/SearchPage.js:73:8)">    at Object.Search: Viewer is NOT able to edit configmaps (/tests/e2e/viewerSearch.test.js:41:16)</failure>
+      <error message="Timed out while waiting for element &lt;.react-tags&gt; to be present for 30000 milliseconds. - expected [0;32m&#34;found&#34;[0m but got: [0;31m&#34;not found&#34;[0m [0;90m(30035ms)[0m" type="error">    at Object.Search: Viewer is NOT able to edit configmaps (/tests/e2e/viewerSearch.test.js:41:16)</error>
+    
+    </testcase>
+  
+
+  
+    <system-err>
+      [0;31m  NoSuchElementError: An error occurred while running .setValue() command on &lt;Element [name=@input]&gt;: undefined; undefined
+   {&#34;sessionId&#34;:&#34;2ec45c03dd7455d259d015b235b25815&#34;,&#34;status&#34;:0,&#34;value&#34;:[]}[0m
+[0;90m       at processTicksAndRejections (internal/process/task_queues.js:97:5)[0m
+[0;31m  NoSuchElementError: An error occurred while running .setValue() command on &lt;Element [name=@input]&gt;: undefined; undefined
+   {&#34;sessionId&#34;:&#34;1f3e8ea962e55fb666d2cc207f066a39&#34;,&#34;status&#34;:0,&#34;value&#34;:[]}[0m
+[0;90m       at runMicrotasks (&lt;anonymous&gt;)
+       at processTicksAndRejections (internal/process/task_queues.js:97:5)[0m
+    </system-err>
+  
+
+  
+  </testsuite>
+</testsuites>
