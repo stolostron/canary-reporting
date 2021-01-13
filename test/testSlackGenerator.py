@@ -52,12 +52,6 @@ class TestSlackGenerator(unittest.TestCase):
 *:blue_question: 1 Test Case Skipped*
 
 *Failing Tests*
-:failed: adminSearch.test -> Search: Search for secret
-```    at Page.enterTextInSearchbar (/tests/page-objects/SearchPage.js:73:8)
-    at Object.Search: Search for secret (/tests/e2e/adminSearch.test.js:34:16)```
-:failed: viewerSearch.test -> Search: Viewer is NOT able to edit configmaps
-```    at Page.enterTextInSearchbar (/tests/page-objects/SearchPage.js:73:8)
-    at Object.Search: Viewer is NOT able to edit configmaps (/tests/e2e/viewerSearch.test.js:41:16)```
 :failed: Provider connections -> Provider connections should be able to be created
 ```CypressError: Timed out retrying: `cy.click()` failed because this element is `disabled`:
 
@@ -82,6 +76,12 @@ https://on.cypress.io/element-cannot-be-interacted-with
     at Promise._settlePromise (https://multicloud-console.apps.ds4-aws-444.aws.red-chesterfield.com/__cypress/runner/cypress_runner.js:7057:18)
     at Promise._settlePromise0 (https://multicloud-console.apps.ds4-aws-444.aws.red-chesterfield.com/__cypress/runner/cypress_runner.js:7102:10)
     at Promise._settlePromises (https://multicloud-console.apps.ds4-aws-444.aws.red-chesterfield.com/__cypress/runner/cypress_runner.js:7182:18)```
+:failed: adminSearch.test -> Search: Search for secret
+```    at Page.enterTextInSearchbar (/tests/page-objects/SearchPage.js:73:8)
+    at Object.Search: Search for secret (/tests/e2e/adminSearch.test.js:34:16)```
+:failed: viewerSearch.test -> Search: Viewer is NOT able to edit configmaps
+```    at Page.enterTextInSearchbar (/tests/page-objects/SearchPage.js:73:8)
+    at Object.Search: Viewer is NOT able to edit configmaps (/tests/e2e/viewerSearch.test.js:41:16)```
 """)
 
 
@@ -120,9 +120,6 @@ https://on.cypress.io/element-cannot-be-interacted-with
 *:blue_question: 1 Test Case Skipped*
 
 *Failing Tests*
-:failed: adminSearch.test -> Search: Search for secret
-```    at Page.enterTextInSearchbar (/tests/page-objects/SearchPage.js:73:8)
-    at Object.Search: Search for secret (/tests/e2e/adminSearch.test.js:34:16)```
 :failed: Provider connections -> Provider connections should be able to be created
 ```CypressError: Timed out retrying: `cy.click()` failed because this element is `disabled`:
 
@@ -147,6 +144,9 @@ https://on.cypress.io/element-cannot-be-interacted-with
     at Promise._settlePromise (https://multicloud-console.apps.ds4-aws-444.aws.red-chesterfield.com/__cypress/runner/cypress_runner.js:7057:18)
     at Promise._settlePromise0 (https://multicloud-console.apps.ds4-aws-444.aws.red-chesterfield.com/__cypress/runner/cypress_runner.js:7102:10)
     at Promise._settlePromises (https://multicloud-console.apps.ds4-aws-444.aws.red-chesterfield.com/__cypress/runner/cypress_runner.js:7182:18)```
+:failed: adminSearch.test -> Search: Search for secret
+```    at Page.enterTextInSearchbar (/tests/page-objects/SearchPage.js:73:8)
+    at Object.Search: Search for secret (/tests/e2e/adminSearch.test.js:34:16)```
 """)
 
 
@@ -165,12 +165,6 @@ https://on.cypress.io/element-cannot-be-interacted-with
 *:blue_question: 1 Test Case Skipped*
 
 *Failing Tests*
-:failed: adminSearch.test -> Search: Search for secret
-```    at Page.enterTextInSearchbar (/tests/page-objects/SearchPage.js:73:8)
-    at Object.Search: Search for secret (/tests/e2e/adminSearch.test.js:34:16)```
-:failed: viewerSearch.test -> Search: Viewer is NOT able to edit configmaps
-```    at Page.enterTextInSearchbar (/tests/page-objects/SearchPage.js:73:8)
-    at Object.Search: Viewer is NOT able to edit configmaps (/tests/e2e/viewerSearch.test.js:41:16)```
 :failed: Provider connections -> Provider connections should be able to be created
 ```CypressError: Timed out retrying: `cy.click()` failed because this element is `disabled`:
 
@@ -195,6 +189,12 @@ https://on.cypress.io/element-cannot-be-interacted-with
     at Promise._settlePromise (https://multicloud-console.apps.ds4-aws-444.aws.red-chesterfield.com/__cypress/runner/cypress_runner.js:7057:18)
     at Promise._settlePromise0 (https://multicloud-console.apps.ds4-aws-444.aws.red-chesterfield.com/__cypress/runner/cypress_runner.js:7102:10)
     at Promise._settlePromises (https://multicloud-console.apps.ds4-aws-444.aws.red-chesterfield.com/__cypress/runner/cypress_runner.js:7182:18)```
+:failed: adminSearch.test -> Search: Search for secret
+```    at Page.enterTextInSearchbar (/tests/page-objects/SearchPage.js:73:8)
+    at Object.Search: Search for secret (/tests/e2e/adminSearch.test.js:34:16)```
+:failed: viewerSearch.test -> Search: Viewer is NOT able to edit configmaps
+```    at Page.enterTextInSearchbar (/tests/page-objects/SearchPage.js:73:8)
+    at Object.Search: Viewer is NOT able to edit configmaps (/tests/e2e/viewerSearch.test.js:41:16)```
 """)
 
 

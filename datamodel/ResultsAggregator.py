@@ -39,7 +39,7 @@ class ResultsAggregator():
 
     
     def get_results(self):
-        return self.__results
+        return sorted(self.__results, key = lambda r: r['name'])
 
 
     def get_counts(self) -> {total, passed, failed, skipped, ignored}:
