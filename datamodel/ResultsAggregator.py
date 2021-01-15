@@ -24,7 +24,7 @@ class ResultsAggregator():
 
     def get_raw_results(self):
         return {
-            "results": self.__results,
+            "results": sorted(self.__results, key = lambda r: r['name']),
             **self.__counts
         }
 
