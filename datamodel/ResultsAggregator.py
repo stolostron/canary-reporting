@@ -120,7 +120,6 @@ class ResultsAggregator():
             self.insert_result(f"{filename}", ResultsAggregator.failed, f"Load {filename}", f"{filename} not found", {"message": f"{filename} could not be opened.  Marking as a failure."})
         if _test_results is not None and isinstance(_test_results, untangle.Element):
             # Try catch is necessary to check for the existance of the testsuites child object on the NoneType root object.  
-            print(filename)
             try:
                 for _test_suite in _test_results.testsuites.children:
                     for _case in _test_suite.children:
