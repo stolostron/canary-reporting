@@ -59,7 +59,7 @@ class ResultsAggregator():
             self.__update_counts(_int_state)
         elif len(_matching_results) == 1:
             if _int_state == ResultsAggregator.failed or _int_state == ResultsAggregator.ignored:
-                self.__update_counts(_int_state, matching_results[0]['state'])
+                self.__update_counts(_int_state, _matching_results[0]['state'])
                 _matching_results[0]['state'] = ResultsAggregator.failed
         else:
             raise ValueError(f"More than one matching test case and test suite ")
@@ -68,7 +68,7 @@ class ResultsAggregator():
     def __update_counts(self, newstate, oldstate=None):
         self.__counts[newstate] = self.__counts[newstate] + 1
         if oldstate is not None:
-            self.count[oldstate] = self.count[oldstate] - 1
+            self.__counts[oldstate] = self.__counts[oldstate] - 1
         self.__counts[ResultsAggregator.total] = self.__counts[ResultsAggregator.total] + 1
 
 
@@ -120,14 +120,15 @@ class ResultsAggregator():
             self.insert_result(f"{filename}", ResultsAggregator.failed, f"Load {filename}", f"{filename} not found", {"message": f"{filename} could not be opened.  Marking as a failure."})
         if _test_results is not None and isinstance(_test_results, untangle.Element):
             # Try catch is necessary to check for the existance of the testsuites child object on the NoneType root object.  
+            print(filename)
             try:
                 for _test_suite in _test_results.testsuites.children:
                     for _case in _test_suite.children:
                         if _case._name == "testcase": # Filter to ensure that we don't accidentally grab non-test-case items (XML can be troublesome)
                             self.insert_result(_test_suite['name'], ResultsAggregator.get_case_state_xml(_case), ResultsAggregator.get_case_name_xml(_case), ResultsAggregator.get_case_metadata_xml(_case, filename))
             except AttributeError as ex:
-                for case in _test_results.testsuite.children:
-                    self.insert_result(_test_suite['name'], ResultsAggregator.get_case_state_xml(_case), ResultsAggregator.get_case_name_xml(_case), ResultsAggregator.get_case_metadata_xml(_case, filename))
+                for _case in _test_results.testsuite.children:
+                    self.insert_result(_test_results.testsuite['name'], ResultsAggregator.get_case_state_xml(_case), ResultsAggregator.get_case_name_xml(_case), ResultsAggregator.get_case_metadata_xml(_case, filename))
         else: # file isn't XML
             self.insert_result(f"{filename}", ResultsAggregator.failed, f"Load {filename}", f"{filename} parse as XML", {"message": f"{filename} not in XML format or is empty.  Marking as a failure."})
 
