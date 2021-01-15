@@ -209,7 +209,7 @@ class ResultsAggregator():
         _meta['message'] =  ResultsAggregator.get_case_message_xml(case)
         _meta['filename'] = os.path.basename(filename)
         _info = re.findall("\[(.*?)\]", ResultsAggregator.get_case_name_xml(case)) 
-        if _info:
+        if _info and len(_info) > 3:
             _meta['priority'] = _info[0]
             _meta['severity'] = _info[1]
             _meta['squad(s)'] = _info[2]
