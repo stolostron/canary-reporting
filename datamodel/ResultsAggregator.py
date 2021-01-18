@@ -11,7 +11,12 @@ class ResultsAggregator():
     def __init__(self, files=[], ignorelist=[]):
         self.ignorelist = ignorelist
         self.ignorelisted_names = [ iv['name'] for iv in self.ignorelist ]
+        # self.__results should only be modified in insert_results and should have
+        # self.__results_unsorted set when it is modified without being sorted
         self.__results = []
+        # "dirty" flag for sorting - set when the dataset has been modified but not sorted
+        # We're doing "lazy" sorting - only sorting results when asked for raw output, for efficiency
+        self.__results_unsorted = False
         self.__counts = {
             f"{ResultsAggregator.total}": 0,
             f"{ResultsAggregator.failed}": 0,
@@ -23,8 +28,9 @@ class ResultsAggregator():
             self.load_file(f)
 
     def get_raw_results(self):
+        self.__sort_results()
         return {
-            "results": sorted(self.__results, key = lambda r: r['name']),
+            "results": self.__results,
             **self.__counts
         }
 
@@ -39,7 +45,8 @@ class ResultsAggregator():
 
     
     def get_results(self):
-        return sorted(self.__results, key = lambda r: r['name'])
+        self.__sort_results()
+        return self.__results
 
 
     def get_counts(self) -> {total, passed, failed, skipped, ignored}:
@@ -57,6 +64,7 @@ class ResultsAggregator():
                 "metadata": metadata
             })
             self.__update_counts(_int_state)
+            self.__results_unsorted = True
         elif len(_matching_results) == 1:
             if _int_state == ResultsAggregator.failed or _int_state == ResultsAggregator.ignored:
                 self.__update_counts(_int_state, _matching_results[0]['state'])
@@ -70,6 +78,12 @@ class ResultsAggregator():
         if oldstate is not None:
             self.__counts[oldstate] = self.__counts[oldstate] - 1
         self.__counts[ResultsAggregator.total] = self.__counts[ResultsAggregator.total] + 1
+
+
+    def __sort_results(self):
+        if self.__results_unsorted:
+            self.__results = sorted(self.__results, key = lambda r: r['name'])
+            self.__results_unsorted = False
 
 
     def load_file(self, filename, filetype=None):
