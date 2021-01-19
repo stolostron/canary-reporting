@@ -1,4 +1,4 @@
-import os, sys, json
+import os, sys, json, argparse
 from github import Github, UnknownObjectException
 from generators import AbstractGenerator,ReportGenerator
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
@@ -65,7 +65,26 @@ class GitHubIssueGenerator(AbstractGenerator.AbstractGenerator, ReportGenerator.
     def generate_subparser(subparser):
         subparser_name = 'gh'
         gh_parser = subparser.add_parser(subparser_name, parents=[ReportGenerator.ReportGenerator.generate_parent_parser()],
-            help="Generate a GitHub issue on a given GitHub repo with artifacts from input JUnit XML tests if a failure is detected.")
+            help="Generate a GitHub issue on a given GitHub repo with artifacts from input JUnit XML tests if a failure is detected.",
+            formatter_class=argparse.RawTextHelpFormatter,
+            epilog="""
+Example Usages:
+
+    Generate a GitHub issue-style md report from the JUnit xml in the 'juint_xml' folder and save it locally to 'github.md':
+        python3 reporter.py gh junit_xml/ -o github.md --dry-run
+
+    Generate a GitHub issue-style md report from the JUnit xml in the 'juint_xml' folder and save it locally to 'github.md' with ignorelist.json as an ignorelist:
+        python3 reporter.py gh junit_xml/ -o github.md --dry-run --ignore-list=ignorelist.json
+
+    Generate a GitHub issue-style md report from the JUnit xml in the 'juint_xml' folder and open a git issue in the org test_org in repo test_repo
+        python3 reporter.py gh junit_xml/ --github-organization=test_org --repo=test_repo
+
+    Generate a GitHub issue-style md report from the JUnit xml in the 'juint_xml' folder and open a git issue in the org test_org in repo test_repo with CLI-provided GITHUB_TOKEN
+        python3 reporter.py gh junit_xml/ --github-organization=test_org --repo=test_repo --github-token=<YOUR_GITHUB_TOKEN>
+
+    Generate the above report with some tags:
+        python3 reporter.py gh junit_xml/ --github-organization=test_org --repo=test_repo --github-token=<YOUR_GITHUB_TOKEN> -t "blocker (P0)" -t "canary-failure" -t "Severity 1 - Urgent" -t "bug"
+""")
         gh_parser.add_argument('--github-organization', nargs=1, default=["open-cluster-management"],
             help="GitHub organization to open an issue against if a failing test is detected.  Defaults to open-cluster-management.")
         gh_parser.add_argument('-r', '--repo', nargs=1, default=["backlog"],

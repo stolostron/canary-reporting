@@ -1,4 +1,4 @@
-import os, sys, json
+import os, sys, json, argparse
 from generators import AbstractGenerator,ReportGenerator
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 from datamodel import ResultsAggregator as ra
@@ -34,7 +34,14 @@ class JsonGenerator(AbstractGenerator.AbstractGenerator, ReportGenerator.ReportG
     def generate_subparser(subparser):
         subparser_name = 'js'
         md_parser = subparser.add_parser(subparser_name, parents=[ReportGenerator.ReportGenerator.generate_parent_parser()],
-            help="Generate a JSON file containing raw test results and metadata about the canary run.")
+            help="Generate a JSON file containing raw test results and metadata about the canary run.",
+            formatter_class=argparse.RawTextHelpFormatter,
+            epilog="""
+Example Usage:
+
+    Generate a parsed and processed JSON representation of the JUnit results in the 'junit_xml' folder and output it to 'out.json':
+        python3 reporter.py js junit_xml/ -o out.json    
+""")
         md_parser.add_argument('-eg', '--executed-quality-gate', default='100',
             help="Percentage of the test suites that must be executed (not skipped) to count as a quality result.")
         md_parser.add_argument('-pg', '--passing-quality-gate', default='100',

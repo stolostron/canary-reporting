@@ -1,4 +1,4 @@
-import os, sys, json
+import os, sys, json, argparse
 from generators import AbstractGenerator,ReportGenerator
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 from datamodel import ResultsAggregator as ra
@@ -55,7 +55,14 @@ class MarkdownGenerator(AbstractGenerator.AbstractGenerator, ReportGenerator.Rep
     def generate_subparser(subparser):
         subparser_name = 'md'
         md_parser = subparser.add_parser(subparser_name, parents=[ReportGenerator.ReportGenerator.generate_parent_parser()],
-            help="Generate a formatted markdown summary report based on input JUnit XML test results.")
+            help="Generate a formatted markdown summary report based on input JUnit XML test results.",
+            formatter_class=argparse.RawTextHelpFormatter,
+            epilog="""
+Example Usages:
+
+    Generate a md report from the JUnit xml in the 'juint_xml' folder and save it locally to 'out.md':
+        python3 reporter.py md junit_xml/ -o out.md
+""")
         md_parser.add_argument('-eg', '--executed-quality-gate', default='100',
             help="Percentage of the test suites that must be executed (not skipped) to count as a quality result.")
         md_parser.add_argument('-pg', '--passing-quality-gate', default='100',
