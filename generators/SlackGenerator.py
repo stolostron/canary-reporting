@@ -1,4 +1,4 @@
-import os, sys, json
+import os, sys, json, argparse
 from generators import AbstractGenerator,ReportGenerator
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 from datamodel import ResultsAggregator as ra
@@ -56,7 +56,14 @@ class SlackGenerator(AbstractGenerator.AbstractGenerator, ReportGenerator.Report
     def generate_subparser(subparser):
         subparser_name = 'sl'
         sl_parser = subparser.add_parser(subparser_name, parents=[ReportGenerator.ReportGenerator.generate_parent_parser()],
-            help="Generate a formatted Slack message json payload based on input JUnit XML test results.")
+            help="Generate a formatted Slack message json payload based on input JUnit XML test results.",
+            formatter_class=argparse.RawTextHelpFormatter,
+            epilog="""
+Example Usages:
+
+    Generate a slack report from the JUnit xml in the 'juint_xml' folder and save it locally to 'out.json':
+        python3 reporter.py md junit_xml/ -o out.json
+""")
         sl_parser.add_argument('-eg', '--executed-quality-gate', default='100',
             help="Percentage of the test suites that must be executed (not skipped) to count as a quality result.")
         sl_parser.add_argument('-pg', '--passing-quality-gate', default='100',
