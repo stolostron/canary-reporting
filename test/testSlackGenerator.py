@@ -26,8 +26,18 @@ class TestSlackGenerator(unittest.TestCase):
             stage="TEST_STAGE",
             hub_version="TEST_HUB_VERSION",
             hub_platform="TEST_HUB_PLATFORM",
-            import_version="TEST_IMPORT_VERSION",
-            import_platform="TEST_IMPORT_PLATFORM",
+            import_cluster_details=[
+                {
+                    "clustername": "cluster1",
+                    "version": "4.7.0",
+                    "platform": "aws"
+                },
+                {
+                    "clustername": "cluster2",
+                    "version": "4.7.1",
+                    "platform": "gcp"
+                }
+            ],
             job_url="TEST_JOB_URL",
             build_id="TEST_BUILD_ID",
             sd_url="TEST_SD_URL",
@@ -39,7 +49,12 @@ class TestSlackGenerator(unittest.TestCase):
 *Job URL:* TEST_JOB_URL
 *Results Markdown:* TEST_MD_URL
 *Snapshot Diff:* TEST_SD_URL
-*Hub Cluster Version:* TEST_HUB_VERSION  *Import Cluster Version:* TEST_IMPORT_VERSION
+*Hub Cluster Platform:* TEST_HUB_PLATFORM    *Hub Cluster Version:* TEST_HUB_VERSION
+
+*Import Cluster(s):*
+• *Import Cluster Platform:* aws    *Import Cluster Version:* 4.7.0
+• *Import Cluster Platform:* gcp    *Import Cluster Version:* 4.7.1
+
 *Opened Issue URL:* TEST_ISSUE_URL
 
 *Quality Gate (100% - 100%):*
@@ -93,8 +108,18 @@ https://on.cypress.io/element-cannot-be-interacted-with
             stage="TEST_STAGE",
             hub_version="TEST_HUB_VERSION",
             hub_platform="TEST_HUB_PLATFORM",
-            import_version="TEST_IMPORT_VERSION",
-            import_platform="TEST_IMPORT_PLATFORM",
+            import_cluster_details=[
+                {
+                    "clustername": "cluster1",
+                    "version": "4.7.0",
+                    "platform": "aws"
+                },
+                {
+                    "clustername": "cluster2",
+                    "version": "4.7.1",
+                    "platform": "gcp"
+                }
+            ],
             job_url="TEST_JOB_URL",
             build_id="TEST_BUILD_ID",
             sd_url="TEST_SD_URL",
@@ -107,7 +132,12 @@ https://on.cypress.io/element-cannot-be-interacted-with
 *Job URL:* TEST_JOB_URL
 *Results Markdown:* TEST_MD_URL
 *Snapshot Diff:* TEST_SD_URL
-*Hub Cluster Version:* TEST_HUB_VERSION  *Import Cluster Version:* TEST_IMPORT_VERSION
+*Hub Cluster Platform:* TEST_HUB_PLATFORM    *Hub Cluster Version:* TEST_HUB_VERSION
+
+*Import Cluster(s):*
+• *Import Cluster Platform:* aws    *Import Cluster Version:* 4.7.0
+• *Import Cluster Platform:* gcp    *Import Cluster Version:* 4.7.1
+
 *Opened Issue URL:* TEST_ISSUE_URL
 
 *Quality Gate (100% - 100%):*
@@ -154,6 +184,7 @@ https://on.cypress.io/element-cannot-be-interacted-with
         _sl_generator = SlackGenerator.SlackGenerator([TestSlackGenerator.results_folder])
         _sl_report = _sl_generator.generate_slack_report()
         self.assertEqual(_sl_report, """*:red_circle: Failed*
+
 
 *Quality Gate (100% - 100%):*
 :red_jenkins_circle:*92% Executed - 75% Passing*
