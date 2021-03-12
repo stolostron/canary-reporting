@@ -17,9 +17,11 @@ class ReportGenerator():
         parent.add_argument('-hp', '--hub-platform', default=os.getenv('HUB_PLATFORM'),
             help="Cloud Platform of the hub cluster used. Attempts to load from the HUB_PLATFORM environment variable if omitted.")
         parent.add_argument('-iv', '--import-version', default=os.getenv('IMPORT_CLUSTER_VERSION'),
-            help="OCP Version of the import cluster used. Attempts to load from the IMPORT_CLUSTER_VERSION environment variable if omitted.")
+            help="OCP Version of the import cluster used. Attempts to load from the IMPORT_CLUSTER_VERSION environment variable if omitted.  Ignored if import cluster details is set.")
         parent.add_argument('-ip', '--import-platform', default=os.getenv('IMPORT_PLATFORM'),
-            help="Cloud Platform of the import cluster used. Attempts to load from the IMPORT_PLATFORM environment variable if omitted.")
+            help="Cloud Platform of the import cluster used. Attempts to load from the IMPORT_PLATFORM environment variable if omitted.  Ignored if import cluster details is set.")
+        parent.add_argument('-ic', '--import-cluster-details-file', default=os.getenv('IMPORT_CLUSTER_DETAILS_FILE'),
+            help="A json file containing a list of cluters, their names, versions, and cloud platforms representing the import clusters used in a canary.")
         parent.add_argument('-j', '--job-url', default=os.getenv('TRAVIS_BUILD_WEB_URL'),
             help="URL of the CI job that created the XML Artifacts. Attempts to load from the TRAVIS_BUILD_WEB_URL environment variable if omitted.")
         parent.add_argument('-id', '--build-id', default=os.getenv('TRAVIS_BUILD_ID'),
