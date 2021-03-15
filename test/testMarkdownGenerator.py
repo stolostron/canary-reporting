@@ -26,8 +26,18 @@ class TestMarkdownGenerator(unittest.TestCase):
             stage="TEST_STAGE",
             hub_version="TEST_HUB_VERSION",
             hub_platform="TEST_HUB_PLATFORM",
-            import_version="TEST_IMPORT_VERSION",
-            import_platform="TEST_IMPORT_PLATFORM",
+            import_cluster_details=[
+                {
+                    "clustername": "cluster1",
+                    "version": "4.7.0",
+                    "platform": "aws"
+                },
+                {
+                    "clustername": "cluster2",
+                    "version": "4.7.1",
+                    "platform": "gcp"
+                }
+            ],
             job_url="TEST_JOB_URL",
             build_id="TEST_BUILD_ID",
             sd_url="TEST_SD_URL",
@@ -42,9 +52,11 @@ class TestMarkdownGenerator(unittest.TestCase):
 
 [**Opened Issue**](TEST_ISSUE_URL)
 
-**Hub Cluster Version:** TEST_HUB_VERSION
+**Hub Cluster Platform:** TEST_HUB_PLATFORM    **Hub Cluster Version:** TEST_HUB_VERSION
 
-**Import Cluster Version:** TEST_IMPORT_VERSION
+**Import Cluster(s):**
+* **Import Cluster Platform:** aws    **Import Cluster Version:** 4.7.0
+* **Import Cluster Platform:** gcp    **Import Cluster Version:** 4.7.1
 
 
 ## Quality Gate
@@ -135,8 +147,18 @@ https://on.cypress.io/element-cannot-be-interacted-with
             stage="TEST_STAGE",
             hub_version="TEST_HUB_VERSION",
             hub_platform="TEST_HUB_PLATFORM",
-            import_version="TEST_IMPORT_VERSION",
-            import_platform="TEST_IMPORT_PLATFORM",
+            import_cluster_details=[
+                {
+                    "clustername": "cluster1",
+                    "version": "4.7.0",
+                    "platform": "aws"
+                },
+                {
+                    "clustername": "cluster2",
+                    "version": "4.7.1",
+                    "platform": "gcp"
+                }
+            ],
             job_url="TEST_JOB_URL",
             build_id="TEST_BUILD_ID",
             sd_url="TEST_SD_URL",
@@ -151,9 +173,11 @@ https://on.cypress.io/element-cannot-be-interacted-with
 
 [**Opened Issue**](TEST_ISSUE_URL)
 
-**Hub Cluster Version:** TEST_HUB_VERSION
+**Hub Cluster Platform:** TEST_HUB_PLATFORM    **Hub Cluster Version:** TEST_HUB_VERSION
 
-**Import Cluster Version:** TEST_IMPORT_VERSION
+**Import Cluster(s):**
+* **Import Cluster Platform:** aws    **Import Cluster Version:** 4.7.0
+* **Import Cluster Platform:** gcp    **Import Cluster Version:** 4.7.1
 
 
 ## Quality Gate
@@ -240,6 +264,8 @@ https://on.cypress.io/element-cannot-be-interacted-with
         _md_generator = MarkdownGenerator.MarkdownGenerator([TestMarkdownGenerator.results_folder])
         _md_report = _md_generator.generate_markdown_report()
         self.assertEqual(_md_report, """# :red_circle: Failed
+## Artifacts & Details
+
 
 ## Quality Gate
 
