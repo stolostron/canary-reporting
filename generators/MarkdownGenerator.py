@@ -32,7 +32,7 @@ class MarkdownGenerator(AbstractGenerator.AbstractGenerator, ReportGenerator.Rep
     }
 
     def __init__(self, results_dirs, snapshot=None, branch=None, stage=None, hub_version=None, 
-        hub_platform=None, import_version=None, import_platform=None, job_url=None, build_id=None,
+        hub_platform=None, import_cluster_details=[], job_url=None, build_id=None,
         sd_url=None, issue_url=None, ignorelist=[], passing_quality_gate=100, executed_quality_gate=100):
         """Create a MarkdownGenerator Object, unroll xml files from input, and initialize a ResultsAggregator.  
 
@@ -45,8 +45,7 @@ class MarkdownGenerator(AbstractGenerator.AbstractGenerator, ReportGenerator.Rep
         stage       --  a string representaiton of the integration test stage/step that generated the xml results, ex deploy
         hub_version     --  a string representation of the hub cluster version that was tested
         hub_platform    --  a string representation of the hub cluster's hosting cloud platform
-        import_version  --  a string representation of the import cluster version that was tested
-        import_platform --  a string representation of the import cluster's hosting cloud platform
+        import_cluster_details  --  a list of dicts, each identifying an import cluster's clustername, version, and platform
         job_url     --  the URL of the CI job that produced this JUnit XML, ex. $TRAVIS_BUILD_WEB_URL
         build_id    --  CI build id (unique identifier) that produced this JUnit XML, ex. $TRAVIS_BUILD_ID
         sd_url      --  the URL of any snapshot diff report generated previously for this snapshot
@@ -60,8 +59,7 @@ class MarkdownGenerator(AbstractGenerator.AbstractGenerator, ReportGenerator.Rep
         self.stage = stage
         self.hub_version = hub_version
         self.hub_platform = hub_platform
-        self.import_version = import_version
-        self.import_platform = import_platform
+        self.import_cluster_details = import_cluster_details
         self.job_url = job_url
         self.build_id = build_id
         self.sd_url = sd_url
@@ -123,8 +121,22 @@ Example Usages:
                 _ignorelist = _il['ignored_tests']
             except json.JSONDecodeError as ex:
                 print(f"Ignorelist found in {args.ignore_list} was not in JSON format, ignoring the ignorelist. Ironic.")
+        _import_cluster_details = []
+        if args.import_cluster_details_file is not None and os.path.isfile(args.import_cluster_details_file):
+            try:
+                with open(args.import_cluster_details_file, "r+") as f:
+                    _import_cluster_details = json.loads(f.read())
+            except json.JSONDecodeError as ex:
+                print(f"Import cluster details found in {args.import_cluster_details_file} was not in JSON format, ignoring.")
+        elif args.import_version or args.import_platform:
+            _import_cluster = {
+                "clustername": ""
+            }
+            _import_cluster["version"] = args.import_version if args.import_version else ""
+            _import_cluster["platform"] = args.import_platform if args.import_platform else ""
+            _import_cluster_details.append(_import_cluster)
         _generator = MarkdownGenerator(args.results_directory, snapshot=args.snapshot, branch=args.branch, stage=args.stage,
-            hub_version=args.hub_version, hub_platform=args.hub_platform, import_version=args.import_version, import_platform=args.import_platform,
+            hub_version=args.hub_version, hub_platform=args.hub_platform, import_cluster_details=_import_cluster_details,
             job_url=args.job_url, build_id=args.build_id, ignorelist=_ignorelist, sd_url=args.snapshot_diff_url,
             issue_url=args.issue_url, executed_quality_gate=int(args.executed_quality_gate), passing_quality_gate=int(args.passing_quality_gate))
         _message = _generator.generate_markdown_report()
@@ -164,7 +176,7 @@ Example Usages:
         # Add a link to the CI Job
         if self.job_url is not None:
             _metadata = _metadata + f"## Job URL: {self.job_url}\n"
-        if self.sd_url is not None or self.hub_version is not None or self.import_version is not None or self.issue_url is not None:
+        if self.sd_url is not None or self.hub_version is not None or self.import_cluster_details is not [] or self.issue_url is not None:
             _metadata = _metadata + f"## Artifacts & Details\n"
             # Add a link to the snapshot diff
             if self.sd_url is not None:
@@ -172,13 +184,24 @@ Example Usages:
             # Include a link to the git issue where available
             if self.issue_url is not None:
                 _metadata = _metadata + f"[**Opened Issue**]({self.issue_url})\n\n"
-            # Add a hub + import verion where available
-            if self.hub_version is not None and self.import_version is not None:
-                _metadata = _metadata + f"**Hub Cluster Version:** {self.hub_version}\n\n**Import Cluster Version:** {self.import_version}\n\n"
+            # Add hub cluster details where available
+            if self.hub_platform is not None and self.hub_version is not None:
+                _metadata = _metadata + f"**Hub Cluster Platform:** {self.hub_platform}    **Hub Cluster Version:** {self.hub_version}\n\n"
             elif self.hub_version is not None:
                 _metadata = _metadata + f"**Hub Cluster Version:** {self.hub_version}\n\n"
-            elif self.import_version is not None:
-                _metadata = _metadata + f"**Import Cluster Version:** {self.import_version}\n\n"
+            elif self.hub_platform is not None:
+                _metadata = _metadata + f"**Hub Cluster Platform:** {self.hub_platform}\n\n"
+            # Add import cluster details where available
+            if len(self.import_cluster_details) > 0:
+                _metadata = _metadata + f"**Import Cluster(s):**\n"
+            for import_cluster in self.import_cluster_details:
+                if import_cluster['platform'] is not None and import_cluster["version"] is not None:
+                    _metadata = _metadata + f"* **Import Cluster Platform:** {import_cluster['platform']}    **Import Cluster Version:** {import_cluster['version']}\n"
+                elif import_cluster['version'] is not None:
+                    _metadata = _metadata + f"* **Import Cluster Version:** {import_cluster['version']}\n"
+                elif import_cluster['platform']:
+                    _metadata = _metadata + f"* **Import Cluster Platform:** {import_cluster['platform']}\n"
+            _metadata = _metadata + "\n"
         return _metadata
 
 
