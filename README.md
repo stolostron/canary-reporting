@@ -4,7 +4,7 @@ Reporting logic for the ACM/OCM canary process in one converged python project! 
 
 ## Contributing
 
-Although this project is focused on a single use case within the open-cluster-management organization (aggregating and reporting on XML integration test results), we're open to contribution from the community.  Feel free to fork this repository or contribute directly to it if you find a bug!  We'll include additional details on the contribution process in the future, but for now - feel free to send us a PR!
+Feel free to fork this repository or contribute directly to it if you find a bug!  See [our contributing document](CONTRIBUTING.md) for more details.  
 
 ## Install
 
