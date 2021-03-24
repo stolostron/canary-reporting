@@ -1,4 +1,4 @@
-import untangle, json, xml, os, re
+import untangle, json, xml, os, re, itertools, typing
 
 class ResultsAggregator():
 
@@ -48,8 +48,35 @@ class ResultsAggregator():
         self.__sort_results()
         return self.__results
 
+    
+    def get_unique_tags_from_failures(self):
+        _failures = list(r['metadata'] for r in filter(lambda r: r['state'] == ResultsAggregator.failed, self.__results))
+        return self.get_unique_tags(results=_failures)
 
-    def get_counts(self) -> {total, passed, failed, skipped, ignored}:
+    
+    def get_unique_tags(self, results=None):
+        results = self.__results if results is None else results
+        # Unravelling the below command:
+        #   We map the squad(s) lists from _failures to a single list of lists rather than dicts
+        #       handling non-existance elegantly
+        #   We then flatten the list of lists using itertools.chain
+        #   We then toss that into a set to ensure we only get unique items
+        #   Finally we translate that set into an iterable list of tags
+        _metadata = list(set(itertools.chain(*map(lambda r: r.get('squad(s)', "Unlabelled"), results))))
+        # Here's a more-maintainable backup if we need it later:
+        #   _metadata = set()
+        #   for r in _failures:
+        #      if "squad(s)" in r:
+        #          for s in r["squad(s)"]:
+        #              _metadata.add(s)
+        #   _metadata = list(_metadata)
+        _metadata = [f"squad:{s}" for s in _metadata]
+        _metadata = _metadata + list(set(map(lambda r: r.get('severity', "Severity 1 - Urgent"), results)))
+        _metadata = _metadata + list(set(map(lambda r: r.get('priority', "Priority/P1"), results)))
+        return _metadata
+
+
+    def get_counts(self) -> typing.Dict[str, str]:
         return self.__counts[ResultsAggregator.total], self.__counts[ResultsAggregator.passed], self.__counts[ResultsAggregator.failed], self.__counts[ResultsAggregator.skipped], self.__counts[ResultsAggregator.ignored]
 
 
@@ -226,6 +253,12 @@ class ResultsAggregator():
         if _info and len(_info) >= 3:
             _meta['priority'] = _info[0]
             _meta['severity'] = _info[1]
-            _meta['squad(s)'] = _info[2]
+            _meta['squad(s)'] = _info[2].split(',')
+        else:
+            # Metadata not set - set defaults
+            _meta['priority'] = "Priority/P1"
+            _meta['severity'] = "Severity 1 - Urgent"
+            _meta['squad(s)'] = ["Unlabelled"]
+
         return _meta
 
