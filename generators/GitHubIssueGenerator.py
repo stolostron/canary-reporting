@@ -232,7 +232,7 @@ Example Usages:
                 try:
                     _github_tags_objects.append(repo.get_label(tag))
                 except UnknownObjectException as ex:
-                    print(f"Couldn't find GitHub Tag {tag}, skipping and continuing.", sys.stderr, flush=False)
+                    print(f"Couldn't find GitHub Tag {tag}, skipping and continuing.", file=sys.stderr, flush=False)
                     pass
             _issue = repo.create_issue(self.generate_issue_title(), body=_message, labels=_github_tags_objects)
             print(_issue.html_url)
