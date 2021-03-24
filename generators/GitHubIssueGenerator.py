@@ -32,6 +32,30 @@ class GitHubIssueGenerator(AbstractGenerator.AbstractGenerator, ReportGenerator.
         f"{ra.ResultsAggregator.ignored}": ":warning:",
     }
 
+    # Dict containing tag shortname (used in metadata) to actual tag value (in GitHub)
+    tag_mappings = {
+        "sev1": "Severity 1 - Urgent",
+        "sev2": "Severity 2 - Major",
+        "sev3": "Severity 3 - Minor",
+        "p0": "blocker (P0)",
+        "p1": "Priority/P1",
+        "p2": "Priority/P2",
+        "p3": "Priority/P3"
+    }
+
+    severities = [
+        "Severity 1 - Urgent",
+        "Severity 2 - Major",
+        "Severity 3 - Minor"
+    ]
+
+    priorities = [
+        "blocker (P0)",
+        "Priority/P1",
+        "Priority/P2",
+        "Priority/P3"
+    ]
+
     def __init__(self, results_dirs, snapshot=None, branch=None, stage=None, hub_version=None, 
         hub_platform=None, import_cluster_details=[], job_url=None, build_id=None,
         sd_url=None, md_url=None, must_gather_url=None, results_url=None, ignorelist=[], 
@@ -145,7 +169,7 @@ Example Usages:
             help="If provided - GitHub issue contents will be mirrored to the input filename.")
         gh_parser.add_argument('-dr', '--dry-run', action='store_true',
             help="If provided - an actual GitHub issue will not be created, but the file will be generated, best used with -o.")
-        gh_parser.add_argument('-t', '--tags', action='append',
+        gh_parser.add_argument('-t', '--tags', action='append', default=[],
             help="GitHub issue tags to apply to the created issue.  Only applied if the tags exist on the target repository.")
         gh_parser.set_defaults(func=GitHubIssueGenerator.generate_github_issue_from_args)
         return subparser_name, gh_parser
@@ -164,14 +188,14 @@ Example Usages:
                     _il = json.loads(f.read())
                 _ignorelist = _il['ignored_tests']
             except json.JSONDecodeError as ex:
-                print(f"Ignorelist found in {args.ignore_list} was not in JSON format, ignoring the ignorelist. Ironic.")
+                print(f"Ignorelist found in {args.ignore_list} was not in JSON format, ignoring the ignorelist. Ironic.", file=sys.stderr, flush=False)
         _import_cluster_details = []
         if args.import_cluster_details_file is not None and os.path.isfile(args.import_cluster_details_file):
             try:
                 with open(args.import_cluster_details_file, "r+") as f:
                     _import_cluster_details = json.loads(f.read())
             except json.JSONDecodeError as ex:
-                print(f"Import cluster details found in {args.import_cluster_details_file} was not in JSON format, ignoring.")
+                print(f"Import cluster details found in {args.import_cluster_details_file} was not in JSON format, ignoring.", file=sys.stderr, flush=False)
         elif args.import_version or args.import_platform:
             _import_cluster = {
                 "clustername": ""
@@ -191,6 +215,7 @@ Example Usages:
     def open_github_issue(self):
         """Macro function to assemble and open our GitHub Issue.  This wraps the title, body, and tag assembly and issue generation."""
         _message = self.generate_github_issue_body()
+        _tags = self.generate_tags()
         if self.output_file is not None:
             with open(self.output_file, "w+") as f:
                 f.write(_message)
@@ -200,28 +225,49 @@ Example Usages:
                 org = g.get_organization(self.github_org[0])
                 repo = org.get_repo(self.github_repo[0])
             except UnknownObjectException as ex:
-                print("Failed login to GitHub or find org/repo.  See error below for additional details:")
-                print(ex)
+                print(f"Failed login to GitHub or find org/repo.  See error below for additional details: {ex}", file=sys.stderr, flush=False)
                 exit(1)
-            _tags = []
-            if self.tags:
-                for tag in self.tags:
-                    try:
-                        _tags.append(repo.get_label(tag))
-                    except UnknownObjectException as ex:
-                        print(f"Couldn't find GitHub Tag {tag}, skipping and continuing.")
-                        pass
-            _issue = repo.create_issue(self.generate_issue_title(), body=_message, labels=_tags)
+            _github_tags_objects=[]
+            for tag in _tags:
+                try:
+                    _github_tags_objects.append(repo.get_label(tag))
+                except UnknownObjectException as ex:
+                    print(f"Couldn't find GitHub Tag {tag}, skipping and continuing.", file=sys.stderr, flush=False)
+                    pass
+            _issue = repo.create_issue(self.generate_issue_title(), body=_message, labels=_github_tags_objects)
             print(_issue.html_url)
         else:
             print("--dry-run as been set, skipping git issue creation")
             print(f"GitHub issue would've been created on github.com/{self.github_org[0]}/{self.github_repo[0]}.")
-            if self.tags:
+            if len(_tags) > 0:
                 print("We would attempt to apply the following tags:")
-                for tag in self.tags:
+                for tag in _tags:
                     print(f"* {tag}")
 
+
+    def generate_tags(self):
+        _unique_tags = self.aggregated_results.get_unique_tags_from_failures()
+        _unique_tags = [t if GitHubIssueGenerator.tag_mappings.get(t.lower(), None) is None else GitHubIssueGenerator.tag_mappings.get(t.lower(), None) for t in _unique_tags]
+        _tags = list(set([*_unique_tags, *self.tags])) # Merge and find unique detected tags and user-input tags
+        # Translate tag shortnames into GitHub tag values using our mappings
+        _tags = self.filter_ordered_tags(_tags, GitHubIssueGenerator.severities)
+        _tags = self.filter_ordered_tags(_tags, GitHubIssueGenerator.priorities)
+        return _tags
+
     
+    def filter_ordered_tags(self, target, ordered_filter):
+        """Helper function to filer an input list to include only the highest-indexed entry given an ordered list of priority/severity tags."""
+        _highest=len(ordered_filter)
+        for t in target:
+            _highest = ordered_filter.index(t) if t in ordered_filter and ordered_filter.index(t) < _highest else _highest
+        if _highest < len(ordered_filter):
+            ordered_filter.remove(ordered_filter[_highest])
+            _filtered_target = [t for t in target if t not in ordered_filter]
+            return _filtered_target
+        else:
+            return target
+    
+
     def generate_github_issue_body(self):
         """Macro function to assemble our GitHub Issue.  This wraps the header, metadata, summary, and body generation with a neat bow."""
         # Generate GitHub Issue Test
