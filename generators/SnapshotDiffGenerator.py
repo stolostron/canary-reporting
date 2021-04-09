@@ -35,10 +35,10 @@ class SnapshotDiffGenerator(AbstractGenerator.AbstractGenerator):
         new_repo  -- repo type for the new manifest.  Toggles between local file and github
 
         Keyword Arguments:
-        base_timestamp       -- timestamp for the base manifest, only used on github type sources
+        base_timestamp       -- timestamp for the base manifest, only used on github type sources; will find the next-latest if not specified
         new_timestamp        -- timestamp for the new manifest, only used on github type sources
-        base_product_version -- product version for the base manifest, only used on github type sources
-        new_product_version  -- product version for the new manifest, only used on github type sources
+        base_product_version -- product version for the base manifest, only used on github type sources; example: 2.3.0
+        new_product_version  -- product version for the new manifest, only used on github type sources; example: 2.3.0
         github_token    -- token used to access github, only used on github type sources
         github_org      -- github organization to be used for manifest query, only used on github type sources
         github_repo     -- github repo housing manifest files, only used on github type sources
@@ -101,19 +101,22 @@ class SnapshotDiffGenerator(AbstractGenerator.AbstractGenerator):
 Example Usages:
 
     Get a simple diff between two snapshots from integration:
-        python3 reporter.py sd integration integration --base-timestamp 2020-10-21-03-13-21 --new-timestamp 2020-10-22-07-20-54
+        python3 reporter.py sd integration integration --base-timestamp 2021-02-08-23-56-26 --new-timestamp 2021-02-09-23-34-56
 
     View the same diff in brief sha form: 
-        python3 reporter.py sd integration integration --base-timestamp 2020-10-21-03-13-21 --new-timestamp 2020-10-22-07-20-54 -o sha
+        python3 reporter.py sd integration integration --base-timestamp 2021-02-08-23-56-26 --new-timestamp 2021-02-09-23-34-56 -o sha
 
     Get a diff for a specific product version:
-        python3 reporter.py sd integration integration --base-timestamp 2020-10-21-03-13-21 --new-timestamp 2020-10-22-07-20-54 --base-product-version 2.1.0 --new-product-version 2.1.0
+        python3 reporter.py sd integration integration --base-timestamp 2021-02-08-23-56-26 --new-timestamp 2021-02-09-23-34-56 --base-product-version 2.3.0 --new-product-version 2.3.0
 
     Generate a diff from a local file:
         python3 reporter.py sd oldmanifest.json newmanifest.json --base-repo local --new-repo local
 
-    Generate a markdown diff and output it to a file:
-        python3 reporter.py sd integration integration --base-timestamp 2020-10-21-03-13-21 --new-timestamp 2020-10-22-07-20-54 -o md --output-file diff.md
+    Generate a markdown diff between a specific timestamp and the snapshot previous to it, and output it to a file:
+        python3 reporter.py sd integration integration --new-timestamp 2021-02-09-23-34-56 -o md --output-file diff.md
+
+    Generate a markdown diff and output it to a file, specifying both timestamps:
+        python3 reporter.py sd integration integration --base-timestamp 2021-02-08-23-56-26 --new-timestamp 2021-02-09-23-34-56 -o md --output-file diff.md
 """)
         sd_parser.add_argument('base', metavar='base',
             help="Our 'base' manifest specificaiton.  By default it will look for a GitHub branch named <base> on the specified repo and org. If --base-repo=local is specified, we'll use this as a filepath to a local manifest file instead.")
@@ -127,10 +130,10 @@ Example Usages:
             help="Timestamp portion of a specific snapshot to be pulled from the base stage branch of the org/repo specified for use in diff.")
         sd_parser.add_argument('--new-timestamp',
             help="Timestamp portion of a specific snapshot to be pulled from the new stage branch of the org/repo specified for use in diff.")
-        sd_parser.add_argument('--base-product-version', default=os.getenv('OCM_RELEASE_VERSION') if os.getenv('OCM_RELEASE_VERSION') is not None else '2.1.0', type=SnapshotDiffGenerator.product_version_type,
-            help="Full Release version in the format X.Y.Z for the manifest of base_snapshot.  Used for manifest lookup. Defaults to OCM_RELEASE_VERSION environment variable value if set, '2.1.0' if not.")
-        sd_parser.add_argument('--new-product-version', default=os.getenv('OCM_RELEASE_VERSION') if os.getenv('OCM_RELEASE_VERSION') is not None else '2.1.0', type=SnapshotDiffGenerator.product_version_type,
-            help="Full Release version in the format X.Y.Z for the manifest of new_snapshot.  Used for manifest lookup. Defaults to OCM_RELEASE_VERSION environment variable value if set, '2.1.0' if not.")
+        sd_parser.add_argument('--base-product-version', default=os.getenv('OCM_RELEASE_VERSION') if os.getenv('OCM_RELEASE_VERSION') is not None else '2.3.0', type=SnapshotDiffGenerator.product_version_type,
+            help="Full Release version in the format X.Y.Z for the manifest of base_snapshot.  Used for manifest lookup. Defaults to OCM_RELEASE_VERSION environment variable value if set, '2.3.0' if not.")
+        sd_parser.add_argument('--new-product-version', default=os.getenv('OCM_RELEASE_VERSION') if os.getenv('OCM_RELEASE_VERSION') is not None else '2.3.0', type=SnapshotDiffGenerator.product_version_type,
+            help="Full Release version in the format X.Y.Z for the manifest of new_snapshot.  Used for manifest lookup. Defaults to OCM_RELEASE_VERSION environment variable value if set, '2.3.0' if not.")
         sd_parser.add_argument('--output-file',
             help="Path to a file where the computed snapshot diff should be output.  If ommitted, the diff will be logged to the stdout.")
         sd_parser.add_argument('-o', '--output-type', choices=['json', 'markdown', 'md', 'sha', 'default'],
