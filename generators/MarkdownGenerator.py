@@ -208,8 +208,8 @@ Example Usages:
     def generate_summary(self):
         """Generates a summary of our test results including gating percentages and pass/fail/skip/ignored results as available."""
         _total, _passed, _failed, _skipped, _ignored = self.aggregated_results.get_counts()
-        _percentage_exectued = round(100 - ((_skipped / _total) * 100))
-        _percentage_passing = round((_passed / (_total - _skipped)) * 100) # Note - percentage of executed tests, ignoring skipped tests
+        _percentage_exectued = round(100 - ((_skipped / _total) * 100)) if _total > 0 else 0
+        _percentage_passing = round((_passed / (_total - _skipped)) * 100) if _total > 0 else 0 # Note - percentage of executed tests, ignoring skipped tests
         # Determine icon for our percentage executed gate
         if _percentage_exectued >= self.executed_quality_gate:
             # Mark with passing if it fully meets quality gates
