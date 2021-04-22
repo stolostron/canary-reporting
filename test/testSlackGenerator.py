@@ -58,7 +58,7 @@ class TestSlackGenerator(unittest.TestCase):
 *Opened Issue URL:* TEST_ISSUE_URL
 
 *Quality Gate (100% - 100%):*
-:red_jenkins_circle:*92% Executed - 75% Passing*
+:red_jenkins_circle:*92.31% Executed - 75.0% Passing*
 
 *Results:*
 *:white_check_mark: 9 Tests Passed*
@@ -141,7 +141,7 @@ https://on.cypress.io/element-cannot-be-interacted-with
 *Opened Issue URL:* TEST_ISSUE_URL
 
 *Quality Gate (100% - 100%):*
-:red_jenkins_circle:*92% Executed - 75% Passing*
+:red_jenkins_circle:*92.31% Executed - 75.0% Passing*
 
 *Results:*
 *:white_check_mark: 9 Tests Passed*
@@ -187,7 +187,7 @@ https://on.cypress.io/element-cannot-be-interacted-with
 
 
 *Quality Gate (100% - 100%):*
-:red_jenkins_circle:*92% Executed - 75% Passing*
+:red_jenkins_circle:*92.31% Executed - 75.0% Passing*
 
 *Results:*
 *:white_check_mark: 9 Tests Passed*

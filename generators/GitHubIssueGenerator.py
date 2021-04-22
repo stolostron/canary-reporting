@@ -349,8 +349,9 @@ Example Usages:
     def generate_summary(self):
         """Generates a summary of our test results including gating percentages and pass/fail/skip/ignored results as available."""
         _total, _passed, _failed, _skipped, _ignored = self.aggregated_results.get_counts()
-        _percentage_exectued = round(100 - ((_skipped / _total) * 100)) if _total > 0 else 0
-        _percentage_passing = round((_passed / (_total - _skipped)) * 100) if _total > 0 else 0 # Note - percentage of executed tests, ignoring skipped tests
+        _coverage = self.aggregated_results.get_coverage()
+        _percentage_exectued = round(_coverage[ra.ResultsAggregator.skipped], 2)
+        _percentage_passing = round(_coverage[ra.ResultsAggregator.passed], 2) # Note - percentage of executed tests, ignoring skipped tests
         # Determine icon for our percentage executed gate
         if _percentage_exectued >= self.executed_quality_gate:
             # Mark with passing if it fully meets quality gates
@@ -374,7 +375,6 @@ Example Usages:
         _summary = f"## Quality Gate\n\n"
         _summary = _summary + f"{_executed_icon} **Percentage Executed:** {_percentage_exectued}% ({self.executed_quality_gate}% Quality Gate)\n\n"
         _summary = _summary + f"{_passing_icon} **Percentage Passing:** {_percentage_passing}% ({self.passing_quality_gate}% Quality Gate)\n\n"
-        _total, _passed, _failed, _skipped, _ignored = self.aggregated_results.get_counts()
         _summary = _summary + "## Summary\n\n"
         _summary = _summary + f"**{GitHubIssueGenerator.status_symbols[ra.ResultsAggregator.passed]} {_passed} " + ("Test" if _passed == 1 else "Tests") + " Passed**\n\n"
         _summary = _summary + f"**{GitHubIssueGenerator.status_symbols[ra.ResultsAggregator.failed]} {_failed} "  + ("Test" if _failed == 1 else "Tests") + " Failed**\n\n"

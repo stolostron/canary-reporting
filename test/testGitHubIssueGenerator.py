@@ -69,9 +69,9 @@ class TestGitHubIssueGenerator(unittest.TestCase):
 
 ## Quality Gate
 
-:warning: **Percentage Executed:** 92% (100% Quality Gate)
+:warning: **Percentage Executed:** 92.31% (100% Quality Gate)
 
-:red_circle: **Percentage Passing:** 75% (100% Quality Gate)
+:red_circle: **Percentage Passing:** 75.0% (100% Quality Gate)
 
 ## Summary
 
@@ -180,9 +180,9 @@ https://on.cypress.io/element-cannot-be-interacted-with
 
 ## Quality Gate
 
-:warning: **Percentage Executed:** 92% (100% Quality Gate)
+:warning: **Percentage Executed:** 92.31% (100% Quality Gate)
 
-:red_circle: **Percentage Passing:** 75% (100% Quality Gate)
+:red_circle: **Percentage Passing:** 75.0% (100% Quality Gate)
 
 ## Summary
 
@@ -255,9 +255,9 @@ https://on.cypress.io/element-cannot-be-interacted-with
 
 ## Quality Gate
 
-:warning: **Percentage Executed:** 92% (100% Quality Gate)
+:warning: **Percentage Executed:** 92.31% (100% Quality Gate)
 
-:red_circle: **Percentage Passing:** 75% (100% Quality Gate)
+:red_circle: **Percentage Passing:** 75.0% (100% Quality Gate)
 
 ## Summary
 
