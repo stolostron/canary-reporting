@@ -26,6 +26,10 @@ class ReportGenerator():
             help="URL of the CI job that created the XML Artifacts. Attempts to load from the TRAVIS_BUILD_WEB_URL environment variable if omitted.")
         parent.add_argument('-id', '--build-id', default=os.getenv('TRAVIS_BUILD_ID'),
             help="Unique ID of the CI job that created the XML Artifacts. Attempts to load from the TRAVIS_BUILD_ID environment variable if omitted.")
+        parent.add_argument('-eg', '--executed-quality-gate', default='100',
+            help="Percentage of the test suites that must be executed (not skipped) to count as a quality result.")
+        parent.add_argument('-pg', '--passing-quality-gate', default='100',
+            help="Percentage of the executed test cases that must pass to count as a quality result.")
         parent.add_argument('-il', '--ignore-list',
             help="Path to the IgnoreList JSON file. Ignorelist won't be used if omitted.")
         return parent

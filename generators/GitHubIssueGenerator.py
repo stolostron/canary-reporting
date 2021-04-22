@@ -153,10 +153,6 @@ Example Usages:
             help="GitHub repo to open an issue against if a failing test is detected.  Defaults to 'backlog'.")
         gh_parser.add_argument('--github-token', nargs=1, default=os.getenv('GITHUB_TOKEN'),
             help="GitHub token for access to create GitHub issues.  Pulls from teh GITHUB_TOKEN environment variable if not specified.")
-        gh_parser.add_argument('-eg', '--executed-quality-gate', default='100',
-            help="Percentage of the test suites that must be executed (not skipped) to count as a quality result.")
-        gh_parser.add_argument('-pg', '--passing-quality-gate', default='100',
-            help="Percentage of the executed test cases that must pass to count as a quality result.")
         gh_parser.add_argument('-md', '--markdown-url',
             help="URL of the markdown report file artifact associated with this report.")
         gh_parser.add_argument('-sd', '--snapshot-diff-url',

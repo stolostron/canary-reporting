@@ -93,10 +93,6 @@ Example Usages:
     Generate a md report from the JUnit xml in the 'juint_xml' folder and save it locally to 'out.md':
         python3 reporter.py md junit_xml/ -o out.md
 """)
-        md_parser.add_argument('-eg', '--executed-quality-gate', default='100',
-            help="Percentage of the test suites that must be executed (not skipped) to count as a quality result.")
-        md_parser.add_argument('-pg', '--passing-quality-gate', default='100',
-            help="Percentage of the executed test cases that must pass to count as a quality result.")
         md_parser.add_argument('-sd', '--snapshot-diff-url',
             help="URL of the snapshot diff file artifact associated with this report.")
         md_parser.add_argument('-iu', '--issue-url',

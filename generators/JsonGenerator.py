@@ -71,10 +71,6 @@ Example Usage:
     Generate a parsed and processed JSON representation of the JUnit results in the 'junit_xml' folder and output it to 'out.json':
         python3 reporter.py js junit_xml/ -o out.json    
 """)
-        md_parser.add_argument('-eg', '--executed-quality-gate', default='100',
-            help="Percentage of the test suites that must be executed (not skipped) to count as a quality result.")
-        md_parser.add_argument('-pg', '--passing-quality-gate', default='100',
-            help="Percentage of the executed test cases that must pass to count as a quality result.")
         md_parser.add_argument('-iu', '--issue-url', default=os.getenv('GIT_ISSUE_URL'),
             help="URL of the github/jira/tracking issue associated with this report.")
         md_parser.add_argument('-o', '--output-file',
