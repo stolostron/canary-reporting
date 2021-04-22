@@ -94,12 +94,8 @@ class SlackGenerator(AbstractGenerator.AbstractGenerator, ReportGenerator.Report
 Example Usages:
 
     Generate a slack report from the JUnit xml in the 'juint_xml' folder and save it locally to 'out.json':
-        python3 reporter.py md junit_xml/ -o out.json
+        python3 reporter.py sl junit_xml/ -o out.json
 """)
-        sl_parser.add_argument('-eg', '--executed-quality-gate', default='100',
-            help="Percentage of the test suites that must be executed (not skipped) to count as a quality result.")
-        sl_parser.add_argument('-pg', '--passing-quality-gate', default='100',
-            help="Percentage of the executed test cases that must pass to count as a quality result.")
         sl_parser.add_argument('-md', '--markdown-url',
             help="URL of the markdown report file artifact associated with this report.")
         sl_parser.add_argument('-sd', '--snapshot-diff-url',
