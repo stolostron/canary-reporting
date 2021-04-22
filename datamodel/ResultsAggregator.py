@@ -24,13 +24,21 @@ class ResultsAggregator():
             f"{ResultsAggregator.skipped}": 0,
             f"{ResultsAggregator.ignored}": 0
         }
+        # coverage contains a live percentage coverage value for tests executed (percentage of total not-skipped)
+        #   and tests passed (percentage of executed tests that passed)
+        self.__coverage = {
+            f"{ResultsAggregator.skipped}": 0,
+            f"{ResultsAggregator.passed}": 0,
+        }
         for f in files:
             self.load_file(f)
+
 
     def get_raw_results(self):
         self.__sort_results()
         return {
             "results": self.__results,
+            "coverage": self.__coverage,
             **self.__counts
         }
 
@@ -47,6 +55,10 @@ class ResultsAggregator():
     def get_results(self):
         self.__sort_results()
         return self.__results
+
+
+    def get_coverage(self):
+        return self.__coverage
 
     
     def get_unique_tags_from_failures(self):
@@ -105,6 +117,10 @@ class ResultsAggregator():
         if oldstate is not None:
             self.__counts[oldstate] = self.__counts[oldstate] - 1
         self.__counts[ResultsAggregator.total] = self.__counts[ResultsAggregator.total] + 1
+        self.__coverage[ResultsAggregator.passed] = ((self.__counts[ResultsAggregator.passed] 
+            / (self.__counts[ResultsAggregator.total] - self.__counts[ResultsAggregator.skipped])) * 100) if self.__counts[ResultsAggregator.total] > 0 else 0
+        self.__coverage[ResultsAggregator.skipped] = (100 - ((self.__counts[ResultsAggregator.skipped] 
+            / self.__counts[ResultsAggregator.total]) * 100)) if self.__counts[ResultsAggregator.total] > 0 else 0
 
 
     def __sort_results(self):
