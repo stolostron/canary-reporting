@@ -43,13 +43,17 @@ class ResultsAggregator():
         }
 
     
-    def get_status(self):
-        if self.__counts[ResultsAggregator.failed] > 0:
-            return ResultsAggregator.failed
-        elif self.__counts[ResultsAggregator.ignored] > 0:
-            return ResultsAggregator.ignored
-        else:
+    def get_status(self, executed_gate=100, passing_gate=100):
+        if self.__coverage[ResultsAggregator.skipped] >= executed_gate and self.__coverage[ResultsAggregator.passed] >= passing_gate:
             return ResultsAggregator.passed
+        return ResultsAggregator.failed
+        # The old way of determining based on pass/fail/ignored
+        # if self.__counts[ResultsAggregator.failed] > 0:
+        #     return ResultsAggregator.failed
+        # elif self.__counts[ResultsAggregator.ignored] > 0:
+        #     return ResultsAggregator.ignored
+        # else:
+        #     return ResultsAggregator.passed
 
     
     def get_results(self):

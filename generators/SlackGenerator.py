@@ -169,7 +169,7 @@ Example Usages:
 
     def generate_header(self):
         """Generates a header string for our slack message in correct slack format, handling with any combination of optional vars."""
-        _status = self.aggregated_results.get_status()
+        _status = self.aggregated_results.get_status(executed_gate=self.executed_quality_gate, passing_gate=self.passing_quality_gate)
         _header = f"{SlackGenerator.header_symbols[_status]}"
         if self.snapshot is not None:
             _header = _header + self.snapshot
@@ -243,7 +243,7 @@ Example Usages:
     def generate_body_full(self):
         """Generates a full slack results body - this edition of the slack message body includes console output for failing test cases."""
         _body = ""
-        if self.aggregated_results.get_status() == ra.ResultsAggregator.failed:
+        if self.aggregated_results.get_status(executed_gate=self.executed_quality_gate, passing_gate=self.passing_quality_gate) == ra.ResultsAggregator.failed:
             _body = "*Failing Tests*\n"
             _results = self.aggregated_results.get_results()
             for _result in _results:
@@ -256,7 +256,7 @@ Example Usages:
     def generate_body_short(self):
         """Generates a shortened slack message results body - this edition omits error messages for failing test cases and only includes the case name."""
         _body = ""
-        if self.aggregated_results.get_status() == ra.ResultsAggregator.failed:
+        if self.aggregated_results.get_status(executed_gate=self.executed_quality_gate, passing_gate=self.passing_quality_gate) == ra.ResultsAggregator.failed:
             _body = "*Failing Tests*\n"
             _results = self.aggregated_results.get_results()
             for _result in _results:

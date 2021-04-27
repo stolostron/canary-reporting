@@ -156,7 +156,7 @@ Example Usages:
 
     def generate_header(self):
         """Generates a header string for our markdown report, handling with any combination of optional vars."""
-        _status = self.aggregated_results.get_status()
+        _status = self.aggregated_results.get_status(executed_gate=self.executed_quality_gate, passing_gate=self.passing_quality_gate)
         _header = f"# {MarkdownGenerator.header_symbols[_status]}"
         if self.snapshot is not None:
             _header = _header + self.snapshot
