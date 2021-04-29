@@ -243,7 +243,9 @@ Example Usages:
     def generate_body_full(self):
         """Generates a full slack results body - this edition of the slack message body includes console output for failing test cases."""
         _body = ""
-        if self.aggregated_results.get_status(executed_gate=self.executed_quality_gate, passing_gate=self.passing_quality_gate) == ra.ResultsAggregator.failed:
+        _total, _passed, _failed, _skipped, _ignored = self.aggregated_results.get_counts()
+        if (self.aggregated_results.get_status(executed_gate=self.executed_quality_gate, passing_gate=self.passing_quality_gate) == ra.ResultsAggregator.failed
+            and _failed > 0):
             _body = "*Failing Tests*\n"
             _results = self.aggregated_results.get_results()
             for _result in _results:
