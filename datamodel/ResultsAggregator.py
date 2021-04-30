@@ -43,13 +43,17 @@ class ResultsAggregator():
         }
 
     
-    def get_status(self):
-        if self.__counts[ResultsAggregator.failed] > 0:
-            return ResultsAggregator.failed
-        elif self.__counts[ResultsAggregator.ignored] > 0:
-            return ResultsAggregator.ignored
-        else:
+    def get_status(self, executed_gate=100, passing_gate=100):
+        if self.__coverage[ResultsAggregator.skipped] >= executed_gate and self.__coverage[ResultsAggregator.passed] >= passing_gate:
             return ResultsAggregator.passed
+        return ResultsAggregator.failed
+        # The old way of determining based on pass/fail/ignored
+        # if self.__counts[ResultsAggregator.failed] > 0:
+        #     return ResultsAggregator.failed
+        # elif self.__counts[ResultsAggregator.ignored] > 0:
+        #     return ResultsAggregator.ignored
+        # else:
+        #     return ResultsAggregator.passed
 
     
     def get_results(self):
@@ -113,14 +117,23 @@ class ResultsAggregator():
 
 
     def __update_counts(self, newstate, oldstate=None):
+        # Iterate counts for pass/fail/skipped/total as needed
         self.__counts[newstate] = self.__counts[newstate] + 1
         if oldstate is not None:
             self.__counts[oldstate] = self.__counts[oldstate] - 1
         self.__counts[ResultsAggregator.total] = self.__counts[ResultsAggregator.total] + 1
-        self.__coverage[ResultsAggregator.passed] = ((self.__counts[ResultsAggregator.passed] 
-            / (self.__counts[ResultsAggregator.total] - self.__counts[ResultsAggregator.skipped])) * 100) if self.__counts[ResultsAggregator.total] > 0 else 0
-        self.__coverage[ResultsAggregator.skipped] = (100 - ((self.__counts[ResultsAggregator.skipped] 
-            / self.__counts[ResultsAggregator.total]) * 100)) if self.__counts[ResultsAggregator.total] > 0 else 0
+        # Update code fail/pass percentage, marking as 0% if 0 tests total ran
+        if (self.__counts[ResultsAggregator.total] - self.__counts[ResultsAggregator.skipped]) > 0:
+            self.__coverage[ResultsAggregator.passed] = ((self.__counts[ResultsAggregator.passed] 
+                / (self.__counts[ResultsAggregator.total] - self.__counts[ResultsAggregator.skipped])) * 100)
+        else:
+            self.__coverage[ResultsAggregator.passed] = 0
+        # Update test execution percentage (% of tests not skipped) if we ran more than 0 total tests
+        if self.__counts[ResultsAggregator.total] > 0:
+            self.__coverage[ResultsAggregator.skipped] = (100 - ((self.__counts[ResultsAggregator.skipped] 
+                / self.__counts[ResultsAggregator.total]) * 100))
+        else:
+            self.__coverage[ResultsAggregator.skipped] = 0
 
 
     def __sort_results(self):
@@ -161,7 +174,6 @@ class ResultsAggregator():
         else:
             raise FileNotFoundError(f"{filename} not found.  Exiting.")
         raise AttributeError(f"{filename} is not in parsable XML or JSON format and cannot be loaded.")
-            
 
     
     def __load_xml(self, filename):

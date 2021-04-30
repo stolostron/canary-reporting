@@ -156,7 +156,7 @@ Example Usages:
 
     def generate_header(self):
         """Generates a header string for our markdown report, handling with any combination of optional vars."""
-        _status = self.aggregated_results.get_status()
+        _status = self.aggregated_results.get_status(executed_gate=self.executed_quality_gate, passing_gate=self.passing_quality_gate)
         _header = f"# {MarkdownGenerator.header_symbols[_status]}"
         if self.snapshot is not None:
             _header = _header + self.snapshot
@@ -252,11 +252,14 @@ Example Usages:
     
     def generate_body(self):
         """Generate a list of all failed or ignored tests and their associated messages, including all details."""
-        _body = "## Failing Tests\n\n"
-        _results = self.aggregated_results.get_results()
-        for _result in _results:
-            if _result['state'] == ra.ResultsAggregator.failed or _result['state'] == ra.ResultsAggregator.ignored:
-                _body = _body + f"### {MarkdownGenerator.status_symbols[_result['state']]} {_result['testsuite']} -> {_result['name']}\n\n"
-                _body = _body + f"```\n{_result['metadata']['message']}\n```\n"
+        _body = ""
+        _total, _passed, _failed, _skipped, _ignored = self.aggregated_results.get_counts()
+        if _failed > 0:
+            _body = _body + "## Failing Tests\n\n"
+            _results = self.aggregated_results.get_results()
+            for _result in _results:
+                if _result['state'] == ra.ResultsAggregator.failed or _result['state'] == ra.ResultsAggregator.ignored:
+                    _body = _body + f"### {MarkdownGenerator.status_symbols[_result['state']]} {_result['testsuite']} -> {_result['name']}\n\n"
+                    _body = _body + f"```\n{_result['metadata']['message']}\n```\n"
         return _body
  
