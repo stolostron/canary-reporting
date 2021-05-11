@@ -7,7 +7,7 @@ import sys
 import pymysql
 import pandas as pd
 from pandas.io.json import json_normalize
-from __future__ import print_function
+
 
 
 def env_set(env_var, default):
