@@ -8,10 +8,10 @@ from pandas.core.frame import DataFrame
 import pymysql
 import pandas as pd
 from pandas.io.json import json_normalize
-from __future__ import print_function
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 from generators import JsonGenerator
 from builder import process_test_results
+from __future__ import print_function
 
 class TestBuilder(unittest.TestCase):
     results_folder = f"{os.path.dirname(os.path.abspath(__file__))}/test_results_dir"
