@@ -189,12 +189,11 @@ Example Usages:
                 _ignorelist = _il['ignored_tests']
             except json.JSONDecodeError as ex:
                 print(f"Ignorelist found in {args.ignore_list} was not in JSON format, ignoring the ignorelist. Ironic.", file=sys.stderr, flush=False)
-        _assigneelist = []
+        _assigneelist = {}
         if args.assignee_list is not None and os.path.isfile(args.assignee_list):
             try:
                 with open(args.assignee_list, "r+") as f:
-                    _al = json.loads(f.read())
-                _assigneelist = _al['assignee_list']
+                    _assigneelist = json.loads(f.read())
             except json.JSONDecodeError as ex:
                 print(f"AssigneeList found in {args.assignee_list} was not in JSON format, ignoring the ignorelist. Ironic.", file=sys.stderr, flush=False)
         _import_cluster_details = []
@@ -245,7 +244,8 @@ Example Usages:
             _github_users=[]
             for tag in _tags:
                 try:
-                    _github_users.append(self.assigneeList[tag])
+                    squad_name = tag.replace('squad:','')
+                    _github_users.append(self.assigneeList[squad_name])
                 except UnknownObjectException as ex:
                     print(f"No user for {tag}, skipping and continuing.", file=sys.stderr, flush=False)
                     pass
