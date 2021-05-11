@@ -58,7 +58,7 @@ class GitHubIssueGenerator(AbstractGenerator.AbstractGenerator, ReportGenerator.
 
     def __init__(self, results_dirs, snapshot=None, branch=None, stage=None, hub_version=None, 
         hub_platform=None, import_cluster_details=[], job_url=None, build_id=None,
-        sd_url=None, md_url=None, must_gather_url=None, results_url=None, ignorelist=[], 
+        sd_url=None, md_url=None, must_gather_url=None, results_url=None, ignorelist=[], assigneeList=[],
         passing_quality_gate=100, executed_quality_gate=100, github_token=os.getenv('GITHUB_TOKEN'), github_org=["open-cluster-management"],
         github_repo=["cicd-staging"], tags=[], dry_run=True, output_file="github.md"):
         """Create a GitHubIssueGenerator Object, unroll xml files from input, and initialize a ResultsAggregator.  
@@ -80,6 +80,7 @@ class GitHubIssueGenerator(AbstractGenerator.AbstractGenerator, ReportGenerator.
         must_gather_url     --  the URL of an s3 bucket containing must-gather data from this test
         results_url         --  the URL of an s3 bucket containing the raw XML results from this test
         ignorelist          --  a list of dicts contianing "name", "squad", and "owner" keys
+        assigneelist        --  a dict containing assignees for issue creation per squad
         passing_quality_gate    --  a number between 0 and 100 that defines the percentage of tests that must pass to declare success
         executed_quality_gate   --  a number between 0 and 100 that defines the percentage of tests that must be executed to declare success
         github_token    --  the user's github token used to access/create the GitHub issue - loaded from the GITHUB_TOKEN env var if not set
@@ -102,6 +103,7 @@ class GitHubIssueGenerator(AbstractGenerator.AbstractGenerator, ReportGenerator.
         self.mg_url = must_gather_url
         self.results_url = results_url
         self.ignorelist = ignorelist
+        self.assigneeList = assigneeList
         self.passing_quality_gate = passing_quality_gate
         self.executed_quality_gate = executed_quality_gate
         self.results_files = []
@@ -167,6 +169,8 @@ Example Usages:
             help="If provided - an actual GitHub issue will not be created, but the file will be generated, best used with -o.")
         gh_parser.add_argument('-t', '--tags', action='append', default=[],
             help="GitHub issue tags to apply to the created issue.  Only applied if the tags exist on the target repository.")
+        gh_parser.add_argument('-al', '--assignee-list',
+            help="GitHub issue assignee for the created issue.  Only applied if the assignees exist on the target repository.")
         gh_parser.set_defaults(func=GitHubIssueGenerator.generate_github_issue_from_args)
         return subparser_name, gh_parser
 
@@ -185,6 +189,14 @@ Example Usages:
                 _ignorelist = _il['ignored_tests']
             except json.JSONDecodeError as ex:
                 print(f"Ignorelist found in {args.ignore_list} was not in JSON format, ignoring the ignorelist. Ironic.", file=sys.stderr, flush=False)
+        _assigneelist = []
+        if args.assignee_list is not None and os.path.isfile(args.assignee_list):
+            try:
+                with open(args.assignee_list, "r+") as f:
+                    _al = json.loads(f.read())
+                _assigneelist = _al['assignee_list']
+            except json.JSONDecodeError as ex:
+                print(f"AssigneeList found in {args.assignee_list} was not in JSON format, ignoring the ignorelist. Ironic.", file=sys.stderr, flush=False)
         _import_cluster_details = []
         if args.import_cluster_details_file is not None and os.path.isfile(args.import_cluster_details_file):
             try:
@@ -201,8 +213,8 @@ Example Usages:
             _import_cluster_details.append(_import_cluster)
         _generator = GitHubIssueGenerator(args.results_directory, snapshot=args.snapshot, branch=args.branch, stage=args.stage,
             hub_version=args.hub_version, hub_platform=args.hub_platform,
-            import_cluster_details=_import_cluster_details, job_url=args.job_url, build_id=args.build_id, ignorelist=_ignorelist, sd_url=args.snapshot_diff_url,
-            md_url=args.markdown_url, executed_quality_gate=int(args.executed_quality_gate), passing_quality_gate=int(args.passing_quality_gate),
+            import_cluster_details=_import_cluster_details, job_url=args.job_url, build_id=args.build_id, ignorelist=_ignorelist, assigneeList=_assigneelist,
+            sd_url=args.snapshot_diff_url, md_url=args.markdown_url, executed_quality_gate=int(args.executed_quality_gate), passing_quality_gate=int(args.passing_quality_gate),
             results_url=args.results_url, must_gather_url=args.must_gather_url, github_token=args.github_token, github_org=args.github_organization,
             github_repo=args.repo, tags=args.tags, dry_run=args.dry_run, output_file=args.output_file)
         _message = _generator.open_github_issue()
@@ -230,7 +242,14 @@ Example Usages:
                 except UnknownObjectException as ex:
                     print(f"Couldn't find GitHub Tag {tag}, skipping and continuing.", file=sys.stderr, flush=False)
                     pass
-            _issue = repo.create_issue(self.generate_issue_title(), body=_message, labels=_github_tags_objects)
+            _github_users=[]
+            for tag in _tags:
+                try:
+                    _github_users.append(self.assigneeList[tag])
+                except UnknownObjectException as ex:
+                    print(f"No user for {tag}, skipping and continuing.", file=sys.stderr, flush=False)
+                    pass
+            _issue = repo.create_issue(self.generate_issue_title(), body=_message, labels=_github_tags_objects, assignees=_github_users)
             print(_issue.html_url)
         else:
             print("--dry-run as been set, skipping git issue creation")
