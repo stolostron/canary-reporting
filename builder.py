@@ -1,5 +1,6 @@
 import json
 import datetime
+from os.path import join
 import re
 import os
 import sys
@@ -97,14 +98,15 @@ def process_test_results(data):
     json_results = data['results']
     df = pd.DataFrame.from_records(json_results)
     normalized_metadata = pd.json_normalize(df.metadata)
-    if 'squad(s)' not in normalized_metadata:
-        normalized_metadata['squad(s)'] = 'Unlabelled'
-    if 'severity' not in normalized_metadata:
-        normalized_metadata['severity']='sev1'
-    if 'priority' not in normalized_metadata:
-        normalized_metadata['priority']='P1'
     joined = df.join(normalized_metadata, how="left")
     joined.drop(['metadata'], axis=1, inplace=True)
+    joined.rename(columns={"squad(s)":"squads"}, inplace=True)
+    joined["squads"] = joined.apply(lambda x: [{"squads": i} for i in x.squads], axis=1)
+    joined = (pd.concat({i: json_normalize(x) for i, x in joined.pop('squads').items()})
+                .reset_index(level=1, drop=True)
+                .join(joined)
+                .reset_index(drop=True))
+    joined.rename(columns={"squads":"squad(s)"}, inplace=True)
     ignore_df = status_filter(joined, 'ignored', 'ignores')
     pass_df = status_filter(joined, 'passed', 'passes')
     fail_df = status_filter(joined, 'failed', 'fails')
@@ -114,18 +116,10 @@ def process_test_results(data):
     return result_df
 
 def status_filter(dataframe, filter_str, column_name):
-    if 'squad(s)' in dataframe:
-        result_df = dataframe[(dataframe.state == filter_str)].groupby(['squad(s)', 'testsuite', 'severity', 'priority'], dropna = False, as_index = False).count()
-        result_df['squad(s)'] = result_df['squad(s)'].fillna('Unlabelled')
-        result_df['severity'] = result_df['severity'].fillna('sev1')
-        result_df['priority'] = result_df['priority'].fillna('P1')
-    else:
-        result_df = dataframe.copy()
-        result_df['squad(s)']='Unlabelled'
-    if 'severity' not in dataframe:
-        result_df['severity']='sev1'
-    if 'priority' not in dataframe:
-        result_df['priority']='P1'
+    result_df = dataframe[(dataframe.state == filter_str)].groupby(['squad(s)', 'testsuite', 'severity', 'priority'], dropna = False, as_index = False).count()
+    result_df['squad(s)'] = result_df['squad(s)'].fillna('Unlabelled')
+    result_df['severity'] = result_df['severity'].fillna('sev1')
+    result_df['priority'] = result_df['priority'].fillna('P1')
     result_df = result_df[['squad(s)', 'testsuite', 'state', 'severity', 'priority']]
     result_df.rename(columns={'state': column_name}, inplace = True)
     return result_df
@@ -134,3 +128,4 @@ def status_filter(dataframe, filter_str, column_name):
 with open(sys.argv[1]) as f:
     populate_db(f)
     f.close()
+    conn.close()
