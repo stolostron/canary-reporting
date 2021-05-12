@@ -9,6 +9,8 @@ import pandas as pd
 from pandas.io.json import json_normalize
 
 
+c = None
+conn = None
 
 def env_set(env_var, default):
     if env_var in os.environ:
@@ -21,13 +23,13 @@ def env_set(env_var, default):
     else:
         return default
 
-db_user = env_set('db_user', 'root')
-db_host = env_set('db_host', 'localhost')
-db_pass = env_set('db_pass', None)
-db_port = env_set('db_port', 3306)
-
-conn = pymysql.connect(host=db_host,user=db_user,db="tests",password=db_pass,port=int(db_port))
-c = conn.cursor()   
+def connect_to_db():
+    db_user = env_set('db_user', 'root')
+    db_host = env_set('db_host', 'localhost')
+    db_pass = env_set('db_pass', None)
+    db_port = env_set('db_port', 3306)
+    conn = pymysql.connect(host=db_host,user=db_user,db="tests",password=db_pass,port=int(db_port))
+    c = conn.cursor()   
 
 
 #inintalize test database
@@ -126,6 +128,7 @@ def status_filter(dataframe, filter_str, column_name):
 
 #reading out of my local json files
 with open(sys.argv[1]) as f:
+    connect_to_db()
     populate_db(f)
     f.close()
     conn.close()
