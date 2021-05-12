@@ -127,7 +127,7 @@ def status_filter(dataframe, filter_str, column_name):
     return result_df
 
 #reading out of my local json files
-if sys.argv[1] is not None:
+if len(sys.argv) > 1:
     with open(sys.argv[1]) as f:
         connect_to_db()
         populate_db(f)
