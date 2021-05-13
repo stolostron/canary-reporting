@@ -58,7 +58,7 @@ class GitHubIssueGenerator(AbstractGenerator.AbstractGenerator, ReportGenerator.
 
     def __init__(self, results_dirs, snapshot=None, branch=None, stage=None, hub_version=None, 
         hub_platform=None, import_cluster_details=[], job_url=None, build_id=None,
-        sd_url=None, md_url=None, must_gather_url=None, results_url=None, ignorelist=[], assigneeList=[],
+        sd_url=None, md_url=None, must_gather_url=None, results_url=None, ignorelist=[], assigneelist=[],
         passing_quality_gate=100, executed_quality_gate=100, github_token=os.getenv('GITHUB_TOKEN'), github_org=["open-cluster-management"],
         github_repo=["cicd-staging"], tags=[], dry_run=True, output_file="github.md"):
         """Create a GitHubIssueGenerator Object, unroll xml files from input, and initialize a ResultsAggregator.  
@@ -103,7 +103,7 @@ class GitHubIssueGenerator(AbstractGenerator.AbstractGenerator, ReportGenerator.
         self.mg_url = must_gather_url
         self.results_url = results_url
         self.ignorelist = ignorelist
-        self.assigneeList = assigneeList
+        self.assigneelist = assigneelist
         self.passing_quality_gate = passing_quality_gate
         self.executed_quality_gate = executed_quality_gate
         self.results_files = []
@@ -195,7 +195,7 @@ Example Usages:
                 with open(args.assignee_list, "r+") as f:
                     _assigneelist = json.loads(f.read())
             except json.JSONDecodeError as ex:
-                print(f"AssigneeList found in {args.assignee_list} was not in JSON format, ignoring the ignorelist. Ironic.", file=sys.stderr, flush=False)
+                print(f"AssigneeList found in {args.assignee_list} was not in JSON format, ignoring the assigneelist.", file=sys.stderr, flush=False)
         _import_cluster_details = []
         if args.import_cluster_details_file is not None and os.path.isfile(args.import_cluster_details_file):
             try:
@@ -212,7 +212,7 @@ Example Usages:
             _import_cluster_details.append(_import_cluster)
         _generator = GitHubIssueGenerator(args.results_directory, snapshot=args.snapshot, branch=args.branch, stage=args.stage,
             hub_version=args.hub_version, hub_platform=args.hub_platform,
-            import_cluster_details=_import_cluster_details, job_url=args.job_url, build_id=args.build_id, ignorelist=_ignorelist, assigneeList=_assigneelist,
+            import_cluster_details=_import_cluster_details, job_url=args.job_url, build_id=args.build_id, ignorelist=_ignorelist, assigneelist=_assigneelist,
             sd_url=args.snapshot_diff_url, md_url=args.markdown_url, executed_quality_gate=int(args.executed_quality_gate), passing_quality_gate=int(args.passing_quality_gate),
             results_url=args.results_url, must_gather_url=args.must_gather_url, github_token=args.github_token, github_org=args.github_organization,
             github_repo=args.repo, tags=args.tags, dry_run=args.dry_run, output_file=args.output_file)
@@ -245,7 +245,7 @@ Example Usages:
             for tag in _tags:
                 try:
                     squad_name = tag.replace('squad:','')
-                    _github_users.append(self.assigneeList[squad_name])
+                    _github_users.append(self.assigneelist[squad_name])
                 except UnknownObjectException as ex:
                     print(f"No user for {tag}, skipping and continuing.", file=sys.stderr, flush=False)
                     pass
@@ -258,6 +258,10 @@ Example Usages:
                 print("We would attempt to apply the following tags:")
                 for tag in _tags:
                     print(f"* {tag}")
+                print("We would attempt to assign the following user:")
+                for tag in _tags:
+                    squad_name = tag.replace('squad:', '')
+                    print(f"* {self.assigneelist[squad_name]}")
 
 
     def generate_tags(self):
