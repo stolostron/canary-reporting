@@ -58,7 +58,7 @@ class GitHubIssueGenerator(AbstractGenerator.AbstractGenerator, ReportGenerator.
 
     def __init__(self, results_dirs, snapshot=None, branch=None, stage=None, hub_version=None, 
         hub_platform=None, import_cluster_details=[], job_url=None, build_id=None,
-        sd_url=None, md_url=None, must_gather_url=None, results_url=None, ignorelist=[], assigneelist=[],
+        sd_url=None, md_url=None, must_gather_url=None, results_url=None, ignorelist=[], assigneelist={},
         passing_quality_gate=100, executed_quality_gate=100, github_token=os.getenv('GITHUB_TOKEN'), github_org=["open-cluster-management"],
         github_repo=["cicd-staging"], tags=[], dry_run=True, output_file="github.md"):
         """Create a GitHubIssueGenerator Object, unroll xml files from input, and initialize a ResultsAggregator.  
