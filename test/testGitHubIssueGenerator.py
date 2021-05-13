@@ -19,8 +19,8 @@ class TestGitHubIssueGenerator(unittest.TestCase):
         }
     ]
     assigneelist = {
-        "search": "anonymous-user-that-I-wont-name",
-        "Unlabelled": "anonymous-cicd-user-that-I-wont-name"
+        "squad:search": "anonymous-user-that-I-wont-name",
+        "squad:Unlabelled": "anonymous-cicd-user-that-I-wont-name"
     }
 
     def test_github_issue_full(self):
