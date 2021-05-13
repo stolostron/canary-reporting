@@ -223,7 +223,6 @@ Example Usages:
         """Macro function to assemble and open our GitHub Issue.  This wraps the title, body, and tag assembly and issue generation."""
         _message = self.generate_github_issue_body()
         _tags = self.generate_tags()
-        _squad_labels = [tag for tag in _tags if "squad:" in tag]
         if self.output_file is not None:
             with open(self.output_file, "w+") as f:
                 f.write(_message)
@@ -242,15 +241,15 @@ Example Usages:
                 except UnknownObjectException as ex:
                     print(f"Couldn't find GitHub Tag {tag}, skipping and continuing.", file=sys.stderr, flush=False)
                     pass
-            _github_users=[]
-            for tag in _squad_labels:
+            _assignees=[]
+            for tag in _tags:
                 try:
-                    squad_name = tag.replace('squad:','')
-                    _github_users.append(self.assigneelist[squad_name])
+                    if tag in self.assigneelist:
+                        _assignees.append(org.get_members(self.assigneelist[tag]))
                 except UnknownObjectException as ex:
                     print(f"No user for {tag}, skipping and continuing.", file=sys.stderr, flush=False)
                     pass
-            _issue = repo.create_issue(self.generate_issue_title(), body=_message, labels=_github_tags_objects, assignees=_github_users)
+            _issue = repo.create_issue(self.generate_issue_title(), body=_message, labels=_github_tags_objects, assignees=_assignees)
             print(_issue.html_url)
         else:
             print("--dry-run as been set, skipping git issue creation")
@@ -259,11 +258,10 @@ Example Usages:
                 print("We would attempt to apply the following tags:")
                 for tag in _tags:
                     print(f"* {tag}")
-            if len(_squad_labels) > 0:
                 print("We would attempt to assign the following user:")
-                for tag in _squad_labels:
-                    squad_name = tag.replace('squad:', '')
-                    print(f"* {self.assigneelist[squad_name]}")
+                for tag in _tags:
+                    if tag in self.assigneelist:
+                        print(f"* {self.assigneelist[tag]}")
 
 
     def generate_tags(self):
