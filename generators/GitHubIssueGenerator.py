@@ -223,6 +223,7 @@ Example Usages:
         """Macro function to assemble and open our GitHub Issue.  This wraps the title, body, and tag assembly and issue generation."""
         _message = self.generate_github_issue_body()
         _tags = self.generate_tags()
+        _squad_labels = [tag for tag in _tags if "squad:" in tag]
         if self.output_file is not None:
             with open(self.output_file, "w+") as f:
                 f.write(_message)
@@ -242,7 +243,7 @@ Example Usages:
                     print(f"Couldn't find GitHub Tag {tag}, skipping and continuing.", file=sys.stderr, flush=False)
                     pass
             _github_users=[]
-            for tag in _tags:
+            for tag in _squad_labels:
                 try:
                     squad_name = tag.replace('squad:','')
                     _github_users.append(self.assigneelist[squad_name])
@@ -258,8 +259,9 @@ Example Usages:
                 print("We would attempt to apply the following tags:")
                 for tag in _tags:
                     print(f"* {tag}")
+            if len(_squad_labels) > 0:
                 print("We would attempt to assign the following user:")
-                for tag in _tags:
+                for tag in _squad_labels:
                     squad_name = tag.replace('squad:', '')
                     print(f"* {self.assigneelist[squad_name]}")
 
