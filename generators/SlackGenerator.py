@@ -230,8 +230,8 @@ Example Usages:
         else:
             # If less than 80% of quality gate, mark as red
             _quality_icon = SlackGenerator.quality_symbols[ra.ResultsAggregator.failed]
-        _summary = f"*Quality Gate ({self.executed_quality_gate}% - {self.passing_quality_gate}%):*\n"
-        _summary = _summary + f"{_quality_icon}*{_percentage_exectued}% Executed - {_percentage_passing}% Passing*\n\n"
+        _summary = f"*Quality Gates ({self.executed_quality_gate}% ; {self.passing_quality_gate}%):*\n"
+        _summary = _summary + f"{_quality_icon}*{_percentage_exectued}% Executed ; {_percentage_passing}% Passing*\n\n"
         _summary = _summary + "*Results:*\n"
         _summary = _summary + f"*{SlackGenerator.status_symbols[ra.ResultsAggregator.passed]} {_passed} " + ("Test" if _passed == 1 else "Tests") + " Passed*\n"
         _summary = _summary + f"*{SlackGenerator.status_symbols[ra.ResultsAggregator.failed]} {_failed} "  + ("Test" if _failed == 1 else "Tests") + " Failed*\n"
