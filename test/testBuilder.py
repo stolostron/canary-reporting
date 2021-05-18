@@ -1,4 +1,6 @@
 import json, os, sys, unittest
+from numpy import equal
+import numpy
 import pandas as pd
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 from generators import JsonGenerator
@@ -7,7 +9,7 @@ from builder import process_test_results
 class TestBuilder(unittest.TestCase):
 
     results_folder = f"{os.path.dirname(os.path.abspath(__file__))}/test_results_dir"
-    def process_test_results(self):
+    def test_process_test_results(self):
         _js_generator = JsonGenerator.JsonGenerator(
             [TestBuilder.results_folder],
             snapshot="TEST_SNAPSHOT",
@@ -47,8 +49,9 @@ class TestBuilder(unittest.TestCase):
         processed_results['time'] = _df['snapshot']
         processed_results['acm_release'] = _df['snapshot']
         processed_results = processed_results[['id','time','acm_release','squad(s)','testsuite','passes','fails','skips','ignored','severity','priority','hub_platform','hub_version','stage','branch','issue_url']]
-        _expected = pd.read_csv('df.txt', delimiter="\t")
-        self.assertEqual(processed_results, _expected)
+        _expected = pd.read_csv(f"{os.path.dirname(os.path.abspath(__file__))}/df.txt", delimiter="\t", dtype={'passes': pd.Int64Dtype(), 'fails': pd.Int64Dtype(), 'skips': pd.Int64Dtype(), 'ignored': pd.Int64Dtype()})
+        processed_results.to_csv(r'df_results.txt', index=None, sep='\t', mode='a')
+        pd.testing.assert_frame_equal(_expected, processed_results)
 
 if __name__ == '__main__':
     unittest.main()

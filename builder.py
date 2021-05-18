@@ -81,7 +81,7 @@ def add_tests_to_db(json_data, date, release):
     pass_idx = squad_test_df.columns.get_loc("passes")
     fail_idx = squad_test_df.columns.get_loc("fails")
     skip_idx = squad_test_df.columns.get_loc("skips")
-    ignore_idx = squad_test_df.columns.get_loc("ignores")
+    ignore_idx = squad_test_df.columns.get_loc("ignored")
     hub_p_idx = squad_test_df.columns.get_loc("hub_platform")
     hub_v_idx = squad_test_df.columns.get_loc("hub_version")
     snapshot_idx = squad_test_df.columns.get_loc("snapshot")
@@ -109,7 +109,7 @@ def process_test_results(data):
                 .join(joined)
                 .reset_index(drop=True))
     joined.rename(columns={"squads":"squad(s)"}, inplace=True)
-    ignore_df = status_filter(joined, 'ignored', 'ignores')
+    ignore_df = status_filter(joined, 'ignored', 'ignored')
     pass_df = status_filter(joined, 'passed', 'passes')
     fail_df = status_filter(joined, 'failed', 'fails')
     skip_df = status_filter(joined, 'skipped', 'skips')
@@ -124,6 +124,7 @@ def status_filter(dataframe, filter_str, column_name):
     result_df['priority'] = result_df['priority'].fillna('P1')
     result_df = result_df[['squad(s)', 'testsuite', 'state', 'severity', 'priority']]
     result_df.rename(columns={'state': column_name}, inplace = True)
+    result_df[column_name] = result_df[column_name].astype('Int64')
     return result_df
 
 #reading out of my local json files
