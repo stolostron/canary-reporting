@@ -245,7 +245,7 @@ Example Usages:
             for tag in _tags:
                 try:
                     if tag in self.assigneelist:
-                        _assignees.append(org.get_members(self.assigneelist[tag]))
+                        _assignees.append(self.get_user(org, self.assigneelist[tag]))
                 except UnknownObjectException as ex:
                     print(f"No user for {tag}, skipping and continuing.", file=sys.stderr, flush=False)
                     pass
@@ -273,7 +273,11 @@ Example Usages:
         _tags = self.filter_ordered_tags(_tags, GitHubIssueGenerator.priorities)
         return _tags
 
-    
+    def get_user(org, user_name):
+        for user in org.get_members():
+            if user.login == user_name:
+                return user
+
     def filter_ordered_tags(self, target, ordered_filter):
         """Helper function to filer an input list to include only the highest-indexed entry given an ordered list of priority/severity tags."""
         _highest=len(ordered_filter)
