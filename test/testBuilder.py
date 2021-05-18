@@ -50,7 +50,6 @@ class TestBuilder(unittest.TestCase):
         processed_results['acm_release'] = _df['snapshot']
         processed_results = processed_results[['id','time','acm_release','squad(s)','testsuite','passes','fails','skips','ignored','severity','priority','hub_platform','hub_version','stage','branch','issue_url']]
         _expected = pd.read_csv(f"{os.path.dirname(os.path.abspath(__file__))}/df.txt", delimiter="\t", dtype={'passes': pd.Int64Dtype(), 'fails': pd.Int64Dtype(), 'skips': pd.Int64Dtype(), 'ignored': pd.Int64Dtype()})
-        processed_results.to_csv(r'df_results.txt', index=None, sep='\t', mode='a')
         pd.testing.assert_frame_equal(_expected, processed_results)
 
 if __name__ == '__main__':
