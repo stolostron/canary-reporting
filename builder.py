@@ -28,6 +28,7 @@ def connect_to_db():
     db_host = env_set('db_host', 'localhost')
     db_pass = env_set('db_pass', None)
     db_port = env_set('db_port', 3306)
+    global conn, c
     conn = pymysql.connect(host=db_host,user=db_user,db="tests",password=db_pass,port=int(db_port))
     c = conn.cursor()   
 
