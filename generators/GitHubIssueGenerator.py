@@ -153,7 +153,7 @@ Example Usages:
             help="GitHub organization to open an issue against if a failing test is detected.  Defaults to open-cluster-management.")
         gh_parser.add_argument('-r', '--repo', nargs=1, default=["backlog"],
             help="GitHub repo to open an issue against if a failing test is detected.  Defaults to 'backlog'.")
-        gh_parser.add_argument('--github-token', nargs=1, default=os.getenv('GITHUB_TOKEN'),
+        gh_parser.add_argument('--github-token', default=os.getenv('GITHUB_TOKEN'),
             help="GitHub token for access to create GitHub issues.  Pulls from teh GITHUB_TOKEN environment variable if not specified.")
         gh_parser.add_argument('-md', '--markdown-url',
             help="URL of the markdown report file artifact associated with this report.")
@@ -245,7 +245,7 @@ Example Usages:
             for tag in _tags:
                 try:
                     if tag in self.assigneelist:
-                        _assignees.append(self.get_user(org, self.assigneelist[tag]))
+                        _assignees.append(GitHubIssueGenerator.get_user(org, self.assigneelist[tag]))
                 except UnknownObjectException as ex:
                     print(f"No user for {tag}, skipping and continuing.", file=sys.stderr, flush=False)
                     pass
