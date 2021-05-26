@@ -18,6 +18,10 @@ class TestGitHubIssueGenerator(unittest.TestCase):
             "owner": "@anonymous-user-that-I-wont-name"
         }
     ]
+    assigneelist = {
+        "squad:search": "anonymous-user-that-I-wont-name",
+        "squad:Unlabelled": "anonymous-cicd-user-that-I-wont-name"
+    }
 
     def test_github_issue_full(self):
         _gh_generator = GitHubIssueGenerator.GitHubIssueGenerator(
@@ -45,6 +49,7 @@ class TestGitHubIssueGenerator(unittest.TestCase):
             must_gather_url="TEST_MUST_GATHER_URL",
             results_url="TEST_RESULTS_URL",
             tags=["TEST_TAG"],
+            assigneelist=TestGitHubIssueGenerator.assigneelist,
             output_file=TestGitHubIssueGenerator.output_file,
             dry_run=True
         )
@@ -157,7 +162,8 @@ https://on.cypress.io/element-cannot-be-interacted-with
             tags=["TEST_TAG"],
             dry_run=True,
             output_file=TestGitHubIssueGenerator.output_file,
-            ignorelist=TestGitHubIssueGenerator.ignorelist
+            ignorelist=TestGitHubIssueGenerator.ignorelist,
+            assigneelist=TestGitHubIssueGenerator.assigneelist
         )
         _gh_generator.open_github_issue()
         with open(TestGitHubIssueGenerator.output_file, "r+") as f:
