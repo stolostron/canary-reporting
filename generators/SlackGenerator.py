@@ -94,12 +94,8 @@ class SlackGenerator(AbstractGenerator.AbstractGenerator, ReportGenerator.Report
 Example Usages:
 
     Generate a slack report from the JUnit xml in the 'juint_xml' folder and save it locally to 'out.json':
-        python3 reporter.py md junit_xml/ -o out.json
+        python3 reporter.py sl junit_xml/ -o out.json
 """)
-        sl_parser.add_argument('-eg', '--executed-quality-gate', default='100',
-            help="Percentage of the test suites that must be executed (not skipped) to count as a quality result.")
-        sl_parser.add_argument('-pg', '--passing-quality-gate', default='100',
-            help="Percentage of the executed test cases that must pass to count as a quality result.")
         sl_parser.add_argument('-md', '--markdown-url',
             help="URL of the markdown report file artifact associated with this report.")
         sl_parser.add_argument('-sd', '--snapshot-diff-url',
@@ -173,7 +169,7 @@ Example Usages:
 
     def generate_header(self):
         """Generates a header string for our slack message in correct slack format, handling with any combination of optional vars."""
-        _status = self.aggregated_results.get_status()
+        _status = self.aggregated_results.get_status(executed_gate=self.executed_quality_gate, passing_gate=self.passing_quality_gate)
         _header = f"{SlackGenerator.header_symbols[_status]}"
         if self.snapshot is not None:
             _header = _header + self.snapshot
@@ -222,8 +218,9 @@ Example Usages:
     def generate_summary(self):
         """Generates a summary of our test results including gating percentages and pass/fail/skip/ignored results as available."""
         _total, _passed, _failed, _skipped, _ignored = self.aggregated_results.get_counts()
-        _percentage_exectued = round(100 - ((_skipped / _total) * 100)) if _total > 0 else 0
-        _percentage_passing = round((_passed / (_total - _skipped)) * 100) if _total > 0 else 0 # Note - percentage of executed tests, ignoring skipped tests
+        _coverage = self.aggregated_results.get_coverage()
+        _percentage_exectued = round(_coverage[ra.ResultsAggregator.skipped], 2)
+        _percentage_passing = round(_coverage[ra.ResultsAggregator.passed], 2) # Note - percentage of executed tests, ignoring skipped tests
         if _percentage_exectued >= self.executed_quality_gate and _percentage_passing >= self.passing_quality_gate:
             # Mark with passing if it fully meets quality gates
             _quality_icon = SlackGenerator.quality_symbols[ra.ResultsAggregator.passed]
@@ -233,8 +230,8 @@ Example Usages:
         else:
             # If less than 80% of quality gate, mark as red
             _quality_icon = SlackGenerator.quality_symbols[ra.ResultsAggregator.failed]
-        _summary = f"*Quality Gate ({self.executed_quality_gate}% - {self.passing_quality_gate}%):*\n"
-        _summary = _summary + f"{_quality_icon}*{_percentage_exectued}% Executed - {_percentage_passing}% Passing*\n\n"
+        _summary = f"*Quality Gates ({self.executed_quality_gate}% ; {self.passing_quality_gate}%):*\n"
+        _summary = _summary + f"{_quality_icon}*{_percentage_exectued}% Executed ; {_percentage_passing}% Passing*\n\n"
         _summary = _summary + "*Results:*\n"
         _summary = _summary + f"*{SlackGenerator.status_symbols[ra.ResultsAggregator.passed]} {_passed} " + ("Test" if _passed == 1 else "Tests") + " Passed*\n"
         _summary = _summary + f"*{SlackGenerator.status_symbols[ra.ResultsAggregator.failed]} {_failed} "  + ("Test" if _failed == 1 else "Tests") + " Failed*\n"
@@ -246,7 +243,9 @@ Example Usages:
     def generate_body_full(self):
         """Generates a full slack results body - this edition of the slack message body includes console output for failing test cases."""
         _body = ""
-        if self.aggregated_results.get_status() == ra.ResultsAggregator.failed:
+        _total, _passed, _failed, _skipped, _ignored = self.aggregated_results.get_counts()
+        if (self.aggregated_results.get_status(executed_gate=self.executed_quality_gate, passing_gate=self.passing_quality_gate) == ra.ResultsAggregator.failed
+            and _failed > 0):
             _body = "*Failing Tests*\n"
             _results = self.aggregated_results.get_results()
             for _result in _results:
@@ -259,7 +258,7 @@ Example Usages:
     def generate_body_short(self):
         """Generates a shortened slack message results body - this edition omits error messages for failing test cases and only includes the case name."""
         _body = ""
-        if self.aggregated_results.get_status() == ra.ResultsAggregator.failed:
+        if self.aggregated_results.get_status(executed_gate=self.executed_quality_gate, passing_gate=self.passing_quality_gate) == ra.ResultsAggregator.failed:
             _body = "*Failing Tests*\n"
             _results = self.aggregated_results.get_results()
             for _result in _results:

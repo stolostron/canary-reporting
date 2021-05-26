@@ -93,10 +93,6 @@ Example Usages:
     Generate a md report from the JUnit xml in the 'juint_xml' folder and save it locally to 'out.md':
         python3 reporter.py md junit_xml/ -o out.md
 """)
-        md_parser.add_argument('-eg', '--executed-quality-gate', default='100',
-            help="Percentage of the test suites that must be executed (not skipped) to count as a quality result.")
-        md_parser.add_argument('-pg', '--passing-quality-gate', default='100',
-            help="Percentage of the executed test cases that must pass to count as a quality result.")
         md_parser.add_argument('-sd', '--snapshot-diff-url',
             help="URL of the snapshot diff file artifact associated with this report.")
         md_parser.add_argument('-iu', '--issue-url',
@@ -160,7 +156,7 @@ Example Usages:
 
     def generate_header(self):
         """Generates a header string for our markdown report, handling with any combination of optional vars."""
-        _status = self.aggregated_results.get_status()
+        _status = self.aggregated_results.get_status(executed_gate=self.executed_quality_gate, passing_gate=self.passing_quality_gate)
         _header = f"# {MarkdownGenerator.header_symbols[_status]}"
         if self.snapshot is not None:
             _header = _header + self.snapshot
@@ -208,8 +204,9 @@ Example Usages:
     def generate_summary(self):
         """Generates a summary of our test results including gating percentages and pass/fail/skip/ignored results as available."""
         _total, _passed, _failed, _skipped, _ignored = self.aggregated_results.get_counts()
-        _percentage_exectued = round(100 - ((_skipped / _total) * 100)) if _total > 0 else 0
-        _percentage_passing = round((_passed / (_total - _skipped)) * 100) if _total > 0 else 0 # Note - percentage of executed tests, ignoring skipped tests
+        _coverage = self.aggregated_results.get_coverage()
+        _percentage_exectued = round(_coverage[ra.ResultsAggregator.skipped], 2)
+        _percentage_passing = round(_coverage[ra.ResultsAggregator.passed], 2) # Note - percentage of executed tests, ignoring skipped tests
         # Determine icon for our percentage executed gate
         if _percentage_exectued >= self.executed_quality_gate:
             # Mark with passing if it fully meets quality gates
@@ -255,11 +252,14 @@ Example Usages:
     
     def generate_body(self):
         """Generate a list of all failed or ignored tests and their associated messages, including all details."""
-        _body = "## Failing Tests\n\n"
-        _results = self.aggregated_results.get_results()
-        for _result in _results:
-            if _result['state'] == ra.ResultsAggregator.failed or _result['state'] == ra.ResultsAggregator.ignored:
-                _body = _body + f"### {MarkdownGenerator.status_symbols[_result['state']]} {_result['testsuite']} -> {_result['name']}\n\n"
-                _body = _body + f"```\n{_result['metadata']['message']}\n```\n"
+        _body = ""
+        _total, _passed, _failed, _skipped, _ignored = self.aggregated_results.get_counts()
+        if _failed > 0:
+            _body = _body + "## Failing Tests\n\n"
+            _results = self.aggregated_results.get_results()
+            for _result in _results:
+                if _result['state'] == ra.ResultsAggregator.failed or _result['state'] == ra.ResultsAggregator.ignored:
+                    _body = _body + f"### {MarkdownGenerator.status_symbols[_result['state']]} {_result['testsuite']} -> {_result['name']}\n\n"
+                    _body = _body + f"```\n{_result['metadata']['message']}\n```\n"
         return _body
  

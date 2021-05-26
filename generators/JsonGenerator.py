@@ -62,7 +62,7 @@ class JsonGenerator(AbstractGenerator.AbstractGenerator, ReportGenerator.ReportG
         subparser -- an argparse.ArgumentParser object to extend with a new subparser.  
         """
         subparser_name = 'js'
-        md_parser = subparser.add_parser(subparser_name, parents=[ReportGenerator.ReportGenerator.generate_parent_parser()],
+        js_parser = subparser.add_parser(subparser_name, parents=[ReportGenerator.ReportGenerator.generate_parent_parser()],
             help="Generate a JSON file containing raw test results and metadata about the canary run.",
             formatter_class=argparse.RawTextHelpFormatter,
             epilog="""
@@ -71,16 +71,12 @@ Example Usage:
     Generate a parsed and processed JSON representation of the JUnit results in the 'junit_xml' folder and output it to 'out.json':
         python3 reporter.py js junit_xml/ -o out.json    
 """)
-        md_parser.add_argument('-eg', '--executed-quality-gate', default='100',
-            help="Percentage of the test suites that must be executed (not skipped) to count as a quality result.")
-        md_parser.add_argument('-pg', '--passing-quality-gate', default='100',
-            help="Percentage of the executed test cases that must pass to count as a quality result.")
-        md_parser.add_argument('-iu', '--issue-url', default=os.getenv('GIT_ISSUE_URL'),
+        js_parser.add_argument('-iu', '--issue-url', default=os.getenv('GIT_ISSUE_URL'),
             help="URL of the github/jira/tracking issue associated with this report.")
-        md_parser.add_argument('-o', '--output-file',
+        js_parser.add_argument('-o', '--output-file',
             help="Destination file for slack message.  Message will be output to stdout if left blank.")
-        md_parser.set_defaults(func=JsonGenerator.generate_json_report_from_args)
-        return subparser_name, md_parser
+        js_parser.set_defaults(func=JsonGenerator.generate_json_report_from_args)
+        return subparser_name, js_parser
 
 
     def generate_json_report_from_args(args):

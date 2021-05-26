@@ -58,7 +58,7 @@ class GitHubIssueGenerator(AbstractGenerator.AbstractGenerator, ReportGenerator.
 
     def __init__(self, results_dirs, snapshot=None, branch=None, stage=None, hub_version=None, 
         hub_platform=None, import_cluster_details=[], job_url=None, build_id=None,
-        sd_url=None, md_url=None, must_gather_url=None, results_url=None, ignorelist=[], 
+        sd_url=None, md_url=None, must_gather_url=None, results_url=None, ignorelist=[], assigneelist={},
         passing_quality_gate=100, executed_quality_gate=100, github_token=os.getenv('GITHUB_TOKEN'), github_org=["open-cluster-management"],
         github_repo=["cicd-staging"], tags=[], dry_run=True, output_file="github.md"):
         """Create a GitHubIssueGenerator Object, unroll xml files from input, and initialize a ResultsAggregator.  
@@ -80,6 +80,7 @@ class GitHubIssueGenerator(AbstractGenerator.AbstractGenerator, ReportGenerator.
         must_gather_url     --  the URL of an s3 bucket containing must-gather data from this test
         results_url         --  the URL of an s3 bucket containing the raw XML results from this test
         ignorelist          --  a list of dicts contianing "name", "squad", and "owner" keys
+        assigneelist        --  a dict containing assignees for issue creation per squad
         passing_quality_gate    --  a number between 0 and 100 that defines the percentage of tests that must pass to declare success
         executed_quality_gate   --  a number between 0 and 100 that defines the percentage of tests that must be executed to declare success
         github_token    --  the user's github token used to access/create the GitHub issue - loaded from the GITHUB_TOKEN env var if not set
@@ -102,6 +103,7 @@ class GitHubIssueGenerator(AbstractGenerator.AbstractGenerator, ReportGenerator.
         self.mg_url = must_gather_url
         self.results_url = results_url
         self.ignorelist = ignorelist
+        self.assigneelist = assigneelist
         self.passing_quality_gate = passing_quality_gate
         self.executed_quality_gate = executed_quality_gate
         self.results_files = []
@@ -151,12 +153,8 @@ Example Usages:
             help="GitHub organization to open an issue against if a failing test is detected.  Defaults to open-cluster-management.")
         gh_parser.add_argument('-r', '--repo', nargs=1, default=["backlog"],
             help="GitHub repo to open an issue against if a failing test is detected.  Defaults to 'backlog'.")
-        gh_parser.add_argument('--github-token', nargs=1, default=os.getenv('GITHUB_TOKEN'),
+        gh_parser.add_argument('--github-token', default=os.getenv('GITHUB_TOKEN'),
             help="GitHub token for access to create GitHub issues.  Pulls from teh GITHUB_TOKEN environment variable if not specified.")
-        gh_parser.add_argument('-eg', '--executed-quality-gate', default='100',
-            help="Percentage of the test suites that must be executed (not skipped) to count as a quality result.")
-        gh_parser.add_argument('-pg', '--passing-quality-gate', default='100',
-            help="Percentage of the executed test cases that must pass to count as a quality result.")
         gh_parser.add_argument('-md', '--markdown-url',
             help="URL of the markdown report file artifact associated with this report.")
         gh_parser.add_argument('-sd', '--snapshot-diff-url',
@@ -171,6 +169,8 @@ Example Usages:
             help="If provided - an actual GitHub issue will not be created, but the file will be generated, best used with -o.")
         gh_parser.add_argument('-t', '--tags', action='append', default=[],
             help="GitHub issue tags to apply to the created issue.  Only applied if the tags exist on the target repository.")
+        gh_parser.add_argument('-al', '--assignee-list',
+            help="GitHub issue assignee for the created issue.  Only applied if the assignees exist on the target repository.")
         gh_parser.set_defaults(func=GitHubIssueGenerator.generate_github_issue_from_args)
         return subparser_name, gh_parser
 
@@ -189,6 +189,13 @@ Example Usages:
                 _ignorelist = _il['ignored_tests']
             except json.JSONDecodeError as ex:
                 print(f"Ignorelist found in {args.ignore_list} was not in JSON format, ignoring the ignorelist. Ironic.", file=sys.stderr, flush=False)
+        _assigneelist = {}
+        if args.assignee_list is not None and os.path.isfile(args.assignee_list):
+            try:
+                with open(args.assignee_list, "r+") as f:
+                    _assigneelist = json.loads(f.read())
+            except json.JSONDecodeError as ex:
+                print(f"AssigneeList found in {args.assignee_list} was not in JSON format, ignoring the assigneelist.", file=sys.stderr, flush=False)
         _import_cluster_details = []
         if args.import_cluster_details_file is not None and os.path.isfile(args.import_cluster_details_file):
             try:
@@ -205,8 +212,8 @@ Example Usages:
             _import_cluster_details.append(_import_cluster)
         _generator = GitHubIssueGenerator(args.results_directory, snapshot=args.snapshot, branch=args.branch, stage=args.stage,
             hub_version=args.hub_version, hub_platform=args.hub_platform,
-            import_cluster_details=_import_cluster_details, job_url=args.job_url, build_id=args.build_id, ignorelist=_ignorelist, sd_url=args.snapshot_diff_url,
-            md_url=args.markdown_url, executed_quality_gate=int(args.executed_quality_gate), passing_quality_gate=int(args.passing_quality_gate),
+            import_cluster_details=_import_cluster_details, job_url=args.job_url, build_id=args.build_id, ignorelist=_ignorelist, assigneelist=_assigneelist,
+            sd_url=args.snapshot_diff_url, md_url=args.markdown_url, executed_quality_gate=int(args.executed_quality_gate), passing_quality_gate=int(args.passing_quality_gate),
             results_url=args.results_url, must_gather_url=args.must_gather_url, github_token=args.github_token, github_org=args.github_organization,
             github_repo=args.repo, tags=args.tags, dry_run=args.dry_run, output_file=args.output_file)
         _message = _generator.open_github_issue()
@@ -234,7 +241,15 @@ Example Usages:
                 except UnknownObjectException as ex:
                     print(f"Couldn't find GitHub Tag {tag}, skipping and continuing.", file=sys.stderr, flush=False)
                     pass
-            _issue = repo.create_issue(self.generate_issue_title(), body=_message, labels=_github_tags_objects)
+            _assignees=[]
+            for tag in _tags:
+                try:
+                    if tag in self.assigneelist:
+                        _assignees.append(GitHubIssueGenerator.get_user(org, self.assigneelist[tag]))
+                except UnknownObjectException as ex:
+                    print(f"No user for {tag}, skipping and continuing.", file=sys.stderr, flush=False)
+                    pass
+            _issue = repo.create_issue(self.generate_issue_title(), body=_message, labels=_github_tags_objects, assignees=_assignees)
             print(_issue.html_url)
         else:
             print("--dry-run as been set, skipping git issue creation")
@@ -243,6 +258,10 @@ Example Usages:
                 print("We would attempt to apply the following tags:")
                 for tag in _tags:
                     print(f"* {tag}")
+                print("We would attempt to assign the following user:")
+                for tag in _tags:
+                    if tag in self.assigneelist:
+                        print(f"* {self.assigneelist[tag]}")
 
 
     def generate_tags(self):
@@ -254,7 +273,11 @@ Example Usages:
         _tags = self.filter_ordered_tags(_tags, GitHubIssueGenerator.priorities)
         return _tags
 
-    
+    def get_user(org, user_name):
+        for user in org.get_members():
+            if user.login == user_name:
+                return user
+
     def filter_ordered_tags(self, target, ordered_filter):
         """Helper function to filer an input list to include only the highest-indexed entry given an ordered list of priority/severity tags."""
         _highest=len(ordered_filter)
@@ -295,7 +318,7 @@ Example Usages:
 
     def generate_header(self):
         """Macro function to assemble our GitHub Issue header, handling with any combination of optional vars."""
-        _status = self.aggregated_results.get_status()
+        _status = self.aggregated_results.get_status(executed_gate=self.executed_quality_gate, passing_gate=self.passing_quality_gate)
         _header = f"# {GitHubIssueGenerator.header_symbols[_status]}"
         if self.snapshot is not None:
             _header = _header + self.snapshot
@@ -349,8 +372,9 @@ Example Usages:
     def generate_summary(self):
         """Generates a summary of our test results including gating percentages and pass/fail/skip/ignored results as available."""
         _total, _passed, _failed, _skipped, _ignored = self.aggregated_results.get_counts()
-        _percentage_exectued = round(100 - ((_skipped / _total) * 100)) if _total > 0 else 0
-        _percentage_passing = round((_passed / (_total - _skipped)) * 100) if _total > 0 else 0 # Note - percentage of executed tests, ignoring skipped tests
+        _coverage = self.aggregated_results.get_coverage()
+        _percentage_exectued = round(_coverage[ra.ResultsAggregator.skipped], 2)
+        _percentage_passing = round(_coverage[ra.ResultsAggregator.passed], 2) # Note - percentage of executed tests, ignoring skipped tests
         # Determine icon for our percentage executed gate
         if _percentage_exectued >= self.executed_quality_gate:
             # Mark with passing if it fully meets quality gates
@@ -374,7 +398,6 @@ Example Usages:
         _summary = f"## Quality Gate\n\n"
         _summary = _summary + f"{_executed_icon} **Percentage Executed:** {_percentage_exectued}% ({self.executed_quality_gate}% Quality Gate)\n\n"
         _summary = _summary + f"{_passing_icon} **Percentage Passing:** {_percentage_passing}% ({self.passing_quality_gate}% Quality Gate)\n\n"
-        _total, _passed, _failed, _skipped, _ignored = self.aggregated_results.get_counts()
         _summary = _summary + "## Summary\n\n"
         _summary = _summary + f"**{GitHubIssueGenerator.status_symbols[ra.ResultsAggregator.passed]} {_passed} " + ("Test" if _passed == 1 else "Tests") + " Passed**\n\n"
         _summary = _summary + f"**{GitHubIssueGenerator.status_symbols[ra.ResultsAggregator.failed]} {_failed} "  + ("Test" if _failed == 1 else "Tests") + " Failed**\n\n"
@@ -385,11 +408,14 @@ Example Usages:
     
     def generate_body(self):
         """Generates a summary of our failing tests and their console/error messages."""
-        _body = "## Failing Tests\n\n"
-        _results = self.aggregated_results.get_results()
-        for _result in _results:
-            if _result['state'] == ra.ResultsAggregator.failed or _result['state'] == ra.ResultsAggregator.ignored:
-                _body = _body + f"### {GitHubIssueGenerator.status_symbols[_result['state']]} {_result['testsuite']} -> {_result['name']}\n\n"
-                _body = _body + f"```\n{_result['metadata']['message']}\n```\n"
+        _body = ""
+        _total, _passed, _failed, _skipped, _ignored = self.aggregated_results.get_counts()
+        if _failed > 0:
+            _body = "## Failing Tests\n\n"
+            _results = self.aggregated_results.get_results()
+            for _result in _results:
+                if _result['state'] == ra.ResultsAggregator.failed or _result['state'] == ra.ResultsAggregator.ignored:
+                    _body = _body + f"### {GitHubIssueGenerator.status_symbols[_result['state']]} {_result['testsuite']} -> {_result['name']}\n\n"
+                    _body = _body + f"```\n{_result['metadata']['message']}\n```\n"
         return _body
     
