@@ -115,7 +115,7 @@ def process_test_results(data):
         joined["squads"] = joined["squads"].apply(lambda x: str(x).split(','))
     #print(joined)
     joined["squads"] = joined.apply(lambda x: [{"squads": i} for i in x.squads], axis=1)
-    joined = (pd.concat({i: json_normalize(x) for i, x in joined.pop('squads').items()})
+    joined = (pd.concat({i: pd.json_normalize(x) for i, x in joined.pop('squads').items()})
                 .reset_index(level=1, drop=True)
                 .join(joined)
                 .reset_index(drop=True))
