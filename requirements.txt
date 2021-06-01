@@ -1,2 +1,4 @@
 PyGithub
 untangle
+pandas
+pymysql
