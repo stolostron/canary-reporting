@@ -285,20 +285,20 @@ Example Usages:
                     _tags.append(GitHubIssueGenerator.severities[_highest_sev])
                     _tags.append(GitHubIssueGenerator.priorities[_highest_pri])
                     _tags.append("squad:{}".format(squad))
-                    github_id = self.open_github_issue_per_squad(_tags)
+                    github_id = self.open_github_issue_per_squad(_tags, squad)
                     if github_id == None:
                         github_id = "seed{}".format(randrange(10000,99999))
-                    print("Unique issue, adding github id {} priorty '{}' and severity '{}' for squad:{}.".format(github_id,GitHubIssueGenerator.severities[_highest_sev],GitHubIssueGenerator.priorities[_highest_pri],squad))
+                    print(f"Unique issue, adding github id {github_id} severity '{GitHubIssueGenerator.severities[_highest_sev]}' and priority '{GitHubIssueGenerator.priorities[_highest_pri]}' for squad:{squad}.", file=sys.stderr, flush=False)
                     # Needed because "Object of type datetime is not JSON serializable"
                     _now = "{}".format(datetime.utcnow())
                     entry = {"github_id":github_id,"status":"open","severity":GitHubIssueGenerator.severities[_highest_sev],"priority":GitHubIssueGenerator.priorities[_highest_pri],"date":_now,"squad_tag":"squad:{}".format(squad),"payload":_flat_issue_set}
-                    print("Return code from database insert: {}".format(db_utils.insert_canary_issue(entry)))
+                    print(f"Return code from database insert: {db_utils.insert_canary_issue(entry)}", file=sys.stderr, flush=False)
                 else:
-                    print("squad:{} is a duplicate of issue {}.".format(squad,dup))
+                    print(f"squad:{squad} is a duplicate of issue {dup}.", file=sys.stderr, flush=False)
                     db_utils.bump_dup_count(dup)
         db_utils.disconnect_from_db()
 
-    def open_github_issue_per_squad(self, _tags):
+    def open_github_issue_per_squad(self, _tags, squad):
         """Macro function to assemble and open GitHub Issues, one per squad.  This wraps the title, body, and tag assembly and issue generation."""
         _message = self.generate_github_issue_body()
         _github_tags_objects = []
@@ -311,7 +311,7 @@ Example Usages:
             except UnknownObjectException as ex:
                 print(f"Failed login to GitHub or find org/repo.  See error below for additional details: {ex}", file=sys.stderr, flush=False)
                 exit(1)
-            print("Using github org {}, repo {}".format(self.github_org[0],self.github_repo[0]))
+            print(f"Using github org {self.github_org[0]}, repo {self.github_repo[0]}", file=sys.stderr, flush=False)
             for tag in _tags:
                 try:
                     _github_tags_objects.append(repo.get_label(tag))
@@ -325,17 +325,18 @@ Example Usages:
                 except UnknownObjectException as ex:
                     print(f"No user for {tag}, skipping and continuing.", file=sys.stderr, flush=False)
                     pass
-            _issue = repo.create_issue(self.generate_issue_title(), body=_message, labels=_github_tags_objects, assignees=_assignees)
+            _issue_title = "{}:{}".format(self.generate_issue_title(),squad)
+            _issue = repo.create_issue(_issue_title, body=_message, labels=_github_tags_objects, assignees=_assignees)
             print(_issue.html_url)
             return _issue.number
         else:
-            print("--dry-run or --no-per-squad-defect has been set, skipping squad's git issue creation")
-            print(f"GitHub issue would've been created on github.com/{self.github_org[0]}/{self.github_repo[0]}.")
+            print(f"--dry-run or --no-per-squad-defect has been set, skipping squad's git issue creation", file=sys.stderr, flush=False)
+            print(f"GitHub issue would've been created on github.com/{self.github_org[0]}/{self.github_repo[0]}.", file=sys.stderr, flush=False)
             if len(_tags) > 0:
-                print("We would attempt to apply the following tags:")
+                print(f"We would attempt to apply the following tags:", file=sys.stderr, flush=False)
                 for tag in _tags:
-                    print(f"* {tag}")
-                print("We would attempt to assign the following user:")
+                    print(f"* {tag}", file=sys.stderr, flush=False)
+                print(f"We would attempt to assign the following user:", file=sys.stderr, flush=False)
                 for tag in _tags:
                     if tag in self.assigneelist:
                         print(f"* {self.assigneelist[tag]}")
@@ -371,15 +372,15 @@ Example Usages:
                     print(f"No user for {tag}, skipping and continuing.", file=sys.stderr, flush=False)
                     pass
             _issue = repo.create_issue(self.generate_issue_title(), body=_message, labels=_github_tags_objects, assignees=_assignees)
-            print("issue URL: {}".format(_issue.html_url))
+            print(_issue.html_url)
         else:
-            print("--dry-run or --no-consolidated-defect has been set, skipping consolidated git issue creation")
-            print(f"GitHub issue would've been created on github.com/{self.github_org[0]}/{self.github_repo[0]}.")
+            print(f"--dry-run or --no-consolidated-defect has been set, skipping consolidated git issue creation", file=sys.stderr, flush=False)
+            print(f"GitHub issue would've been created on github.com/{self.github_org[0]}/{self.github_repo[0]}.", file=sys.stderr, flush=False)
             if len(_tags) > 0:
-                print("We would attempt to apply the following tags:")
+                print(f"We would attempt to apply the following tags:", file=sys.stderr, flush=False)
                 for tag in _tags:
-                    print(f"* {tag}")
-                print("We would attempt to assign the following user:")
+                    print(f"* {tag}", file=sys.stderr, flush=False)
+                print(f"We would attempt to assign the following user:", file=sys.stderr, flush=False)
                 for tag in _tags:
                     if tag in self.assigneelist:
                         print(f"* {self.assigneelist[tag]}")
