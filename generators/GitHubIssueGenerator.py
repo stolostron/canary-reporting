@@ -339,7 +339,7 @@ Example Usages:
                 print(f"We would attempt to assign the following user:", file=sys.stderr, flush=False)
                 for tag in _tags:
                     if tag in self.assigneelist:
-                        print(f"* {self.assigneelist[tag]}")
+                        print(f"* {self.assigneelist[tag]}", file=sys.stderr, flush=False)
 
     def open_github_issue(self):
         """Macro function to assemble and open our GitHub Issue.  This wraps the title, body, and tag assembly and issue generation."""
@@ -383,7 +383,7 @@ Example Usages:
                 print(f"We would attempt to assign the following user:", file=sys.stderr, flush=False)
                 for tag in _tags:
                     if tag in self.assigneelist:
-                        print(f"* {self.assigneelist[tag]}")
+                        print(f"* {self.assigneelist[tag]}", file=sys.stderr, flush=False)
 
 
     def generate_tags(self):
