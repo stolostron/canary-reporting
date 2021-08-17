@@ -31,6 +31,10 @@ def connect_to_db():
         id int NOT NULL AUTO_INCREMENT, \
         github_id text, \
         status text, \
+        snapshot text, \
+        hub_version text, \
+        hub_platform text, \
+        import_cluster_details text, \
         severity text, \
         priority text, \
         date datetime, \
@@ -68,13 +72,20 @@ def update_status(github_id, status):
 
 def insert_canary_issue(issue):
     global conn, c, TABLE_NAME
+    import_details_string = issue['import_cluster_details']
+    import_details = "{}".format(import_details_string)
+    import_details = import_details.replace('"', '""')
     payload_string = issue['payload']
     payload = "{}".format(payload_string)
     payload = payload.replace('"', '""')
-    sql = "INSERT into {} values ({}, {}, {}, {}, {}, {}, {}, \"{}\", {})".format(TABLE_NAME, \
+    sql = "INSERT into {} values ({}, {}, {}, {}, {}, {}, \"{}\", {}, {}, {}, {}, \"{}\", {})".format(TABLE_NAME, \
         0, \
         json.dumps(issue['github_id']), \
         json.dumps(issue['status']), \
+        json.dumps(issue['snapshot']), \
+        json.dumps(issue['hub_version']), \
+        json.dumps(issue['hub_platform']), \
+        import_details, \
         json.dumps(issue['severity']), \
         json.dumps(issue['priority']), \
         json.dumps(issue['date']), \

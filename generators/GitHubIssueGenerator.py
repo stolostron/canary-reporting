@@ -242,7 +242,6 @@ Example Usages:
 
     
     def open_github_issues(self):
-
         # Connect to our duplicate detection database
         db_utils.connect_to_db()
 
@@ -291,7 +290,10 @@ Example Usages:
                     print(f"Unique issue, adding github id {github_id} severity '{GitHubIssueGenerator.severities[_highest_sev]}' and priority '{GitHubIssueGenerator.priorities[_highest_pri]}' for squad:{squad}.", file=sys.stderr, flush=False)
                     # Needed because "Object of type datetime is not JSON serializable"
                     _now = "{}".format(datetime.utcnow())
-                    entry = {"github_id":github_id,"status":"open","severity":GitHubIssueGenerator.severities[_highest_sev],"priority":GitHubIssueGenerator.priorities[_highest_pri],"date":_now,"squad_tag":"squad:{}".format(squad),"payload":_flat_issue_set}
+                    _sh = "Unknown" if self.snapshot == None else self.snapshot
+                    _hv = "Unknown" if self.hub_version == None else self.hub_version
+                    _hp = "Unknown" if self.hub_platform == None else self.hub_platform
+                    entry = {"github_id":github_id, "snapshot":_sh, "hub_version":_hv, "hub_platform":_hp, "import_cluster_details":self.import_cluster_details, "status":"open","severity":GitHubIssueGenerator.severities[_highest_sev],"priority":GitHubIssueGenerator.priorities[_highest_pri],"date":_now,"squad_tag":"squad:{}".format(squad),"payload":_flat_issue_set}
                     print(f"Return code from database insert: {db_utils.insert_canary_issue(entry)}", file=sys.stderr, flush=False)
                 else:
                     print(f"squad:{squad} is a duplicate of issue {dup}.", file=sys.stderr, flush=False)
@@ -344,6 +346,7 @@ Example Usages:
     def open_github_issue(self):
         """Macro function to assemble and open our GitHub Issue.  This wraps the title, body, and tag assembly and issue generation."""
         _message = self.generate_github_issue_body()
+
         _tags = self.generate_tags()
         if self.output_file is not None:
             with open(self.output_file, "w+") as f:
