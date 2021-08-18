@@ -1,6 +1,7 @@
 import json
 import datetime
 import os
+import re
 import sys
 import pymysql
 
@@ -45,8 +46,7 @@ def connect_to_db():
     c.execute(sql)
 
 def payload_exists(payload_string):
-    payload = "{}".format(payload_string)
-    payload = payload.replace('"', '""')
+    payload = sanitize_payload(payload_string)
 
     sql = "SELECT github_id FROM {} where payload = \"{}\" AND status = \"open\";".format(TABLE_NAME,payload)
     num_rows = c.execute(sql)
@@ -75,10 +75,12 @@ def insert_canary_issue(issue):
     import_details_string = issue['import_cluster_details']
     import_details = "{}".format(import_details_string)
     import_details = import_details.replace('"', '""')
-    payload_string = issue['payload']
-    payload = "{}".format(payload_string)
-    payload = payload.replace('"', '""')
-    sql = "INSERT into {} values ({}, {}, {}, {}, {}, {}, \"{}\", {}, {}, {}, {}, \"{}\", {})".format(TABLE_NAME, \
+    payload = sanitize_payload(issue['payload'])
+    # Compute date based on snapshot
+    snapshot = issue['snapshot']
+    datestuff = issue['snapshot'].split('-')
+    iso_date = "{}-{}-{} {}:{}:{}".format(datestuff[2],datestuff[3],datestuff[4],datestuff[5],datestuff[6],datestuff[7],)
+    sql = "INSERT into {} values ({}, {}, {}, {}, {}, {}, \"{}\", {}, {}, \"{}\", {}, \"{}\", {})".format(TABLE_NAME, \
         0, \
         json.dumps(issue['github_id']), \
         json.dumps(issue['status']), \
@@ -88,7 +90,7 @@ def insert_canary_issue(issue):
         import_details, \
         json.dumps(issue['severity']), \
         json.dumps(issue['priority']), \
-        json.dumps(issue['date']), \
+        iso_date, \
         json.dumps(issue['squad_tag']), \
         payload, \
         0 )
@@ -96,6 +98,15 @@ def insert_canary_issue(issue):
     conn.commit()
     return return_code
 
+def sanitize_payload(incoming):
+    _payload = "{}".format(incoming)
+    _payload = _payload.replace('"', '""')
+    # Rip out any big number (typically seen as job numbers)
+    _payload = re.sub(r'\d{5,10}', '<VAR_NUM>', _payload)
+    # Rip out any defect identifiers
+    _payload = re.sub(r'defect #\d{1,10}', 'defect #<VAR_NUM>', _payload)
+    return _payload
+ 
 def disconnect_from_db():
     conn.commit()
     conn.close()
