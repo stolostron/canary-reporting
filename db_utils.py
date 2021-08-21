@@ -86,12 +86,12 @@ def payload_exists(payload_string, snapshot):
         else:
             # We have an existing snapshot - figure out if we need to insert it time-wise or just dup it
             if this_date < first_date:
-                # The incoming snapshot predates the first snapshot to see this payload (or is the same, which would be strange)
+                # The incoming snapshot predates the first snapshot to see this payload
                 distance = last_date - this_date
                 days = distance.total_seconds() / 60 / 60 / 24
                 sql = "UPDATE {} SET first_date = \"{}\", days_duped = \"{}\", first_snapshot = \"{}\", dup_count = \"{}\" WHERE github_id = \"{}\";".format(TABLE_NAME, this_date, days, snapshot, dup_count, github_id)
             elif this_date > last_date:
-                # The incoming snapshot is later than the existing snapshot (or is the same, which would be strange) 
+                # The incoming snapshot is later than the existing snapshot
                 distance = this_date - first_date
                 days = distance.total_seconds() / 60 / 60 / 24
                 sql = "UPDATE {} SET last_date = \"{}\", days_duped = \"{}\", last_snapshot = \"{}\", dup_count = \"{}\" WHERE github_id = \"{}\";".format(TABLE_NAME, this_date, days, snapshot, dup_count, github_id)
