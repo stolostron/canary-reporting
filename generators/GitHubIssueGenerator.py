@@ -287,7 +287,7 @@ Example Usages:
                     _tags.append("squad:{}".format(squad))
                     github_id = self.open_github_issue_per_squad(_tags, squad)
                     if github_id == None:
-                        github_id = "seed{}".format(randrange(10000,99999))
+                        github_id = "seed{}".format(randrange(100000,999999))
                     print(f"Unique issue, adding github id {github_id} severity '{GitHubIssueGenerator.severities[_highest_sev]}' and priority '{GitHubIssueGenerator.priorities[_highest_pri]}' for squad:{squad}.", file=sys.stderr, flush=False)
                     # Needed because "Object of type datetime is not JSON serializable"
                     _now = "{}".format(datetime.utcnow())

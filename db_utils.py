@@ -6,7 +6,7 @@ import sys
 import pymysql
 from datetime import datetime
 
-TABLE_NAME = "canary_issues_v2"
+TABLE_NAME = "canary_issues"
 c = None
 conn = None
 
@@ -61,6 +61,7 @@ def payload_exists(payload_string, snapshot):
     if (num_rows > 0):
         # We have a match based on payload
         dup = list(fetch)[0]
+        github_id = dup
         first_date = list(fetch)[1]
         last_date = list(fetch)[2]
         first_snapshot = list(fetch)[3]
@@ -73,29 +74,36 @@ def payload_exists(payload_string, snapshot):
                 # The incoming snapshot predates the existing snapshot
                 distance = first_date - this_date
                 days = distance.total_seconds() / 60 / 60 / 24
-                sql = "UPDATE {} SET first_date = \"{}\", last_date = \"{}\", days_duped = \"{}\", first_shapshot = \"{}\", last_snapshot = \"{}\", dup_count = \"{}\" WHERE github_id = \"{}\";".format(TABLE_NAME, this_date, first_date, days, snapshot, first_snapshot, dup_count, github_id)
+                sql = "UPDATE {} SET first_date = \"{}\", last_date = \"{}\", days_duped = \"{}\", first_snapshot = \"{}\", last_snapshot = \"{}\", dup_count = \"{}\" WHERE github_id = \"{}\";".format(TABLE_NAME, this_date, first_date, days, snapshot, first_snapshot, dup_count, github_id)
+            elif this_date > first_date:
+                # The incoming snapshot is later than the existing snapshot
+                distance = this_date - first_date
+                days = distance.total_seconds() / 60 / 60 / 24
+                sql = "UPDATE {} SET last_date = \"{}\", days_duped = \"{}\", last_snapshot = \"{}\", dup_count = \"{}\" WHERE github_id = \"{}\";".format(TABLE_NAME, this_date, days, snapshot, dup_count, github_id)
             else:
+                # The incoming snapshot is the same, so we'll ignore it
+                sql = ""
+        else:
+            # We have an existing snapshot - figure out if we need to insert it time-wise or just dup it
+            if this_date < first_date:
+                # The incoming snapshot predates the first snapshot to see this payload (or is the same, which would be strange)
+                distance = last_date - this_date
+                days = distance.total_seconds() / 60 / 60 / 24
+                sql = "UPDATE {} SET first_date = \"{}\", days_duped = \"{}\", first_snapshot = \"{}\", dup_count = \"{}\" WHERE github_id = \"{}\";".format(TABLE_NAME, this_date, days, snapshot, dup_count, github_id)
+            elif this_date > last_date:
                 # The incoming snapshot is later than the existing snapshot (or is the same, which would be strange) 
                 distance = this_date - first_date
                 days = distance.total_seconds() / 60 / 60 / 24
                 sql = "UPDATE {} SET last_date = \"{}\", days_duped = \"{}\", last_snapshot = \"{}\", dup_count = \"{}\" WHERE github_id = \"{}\";".format(TABLE_NAME, this_date, days, snapshot, dup_count, github_id)
-        else:
-            # We have an existing snapshot - figure out if we need to insert it time-wise or just dup it
-            if this_date <= first_date:
-                # The incoming snapshot predates the first snapshot to see this payload (or is the same, which would be strange)
-                distance = last_date - this_date
-                days = distance.total_seconds() / 60 / 60 / 24
-                sql = "UPDATE {} SET first_date = \"{}\", days_duped = \"{}\", first_shapshot = \"{}\", dup_count = \"{}\" WHERE github_id = \"{}\";".format(TABLE_NAME, this_date, days, snapshot, dup_count, github_id)
-            elif this_date >= last_date:
-                # The incoming snapshot is later than the existing snapshot (or is the same, which would be strange) 
-                distance = this_date - first_date
-                days = distance.total_seconds() / 60 / 60 / 24
-                sql = "UPDATE {} SET last_date = \"{}\", days_duped = \"{}\", last_shapshot = \"{}\", dup_count = \"{}\" WHERE github_id = \"{}\";".format(TABLE_NAME, this_date, days, snapshot, dup_count, github_id)
+            elif (this_date == first_date) or (this_date == last_date):
+                # The incoming date is one we've seen before, so we'll ignore it
+                sql = ""
             else:
                 # This is a dup somewhere in the middle
                 sql = "UPDATE {} SET dup_count = \"{}\" WHERE github_id = \"{}\";".format(TABLE_NAME, dup_count, github_id)
-        return_code = c.execute(sql)
-        conn.commit()
+        if sql != "":
+            return_code = c.execute(sql)
+            conn.commit()
 
     return dup
 
