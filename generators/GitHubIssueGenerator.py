@@ -277,8 +277,8 @@ Example Usages:
                 _highest_pri = 1 # 0 would be blocker, that's a little aggressive
             if len(_flat_issue_set) > 0:
                 # Iterate through db, see if issue exists already
-                dup = db_utils.payload_exists(_flat_issue_set)
                 _sh = "Unknown" if self.snapshot == None else self.snapshot
+                dup = db_utils.payload_exists(_flat_issue_set, _sh)
                 if dup == None:
                     # Get a local copy of tags they want us to add
                     _tags = self.tags.copy()
@@ -297,7 +297,6 @@ Example Usages:
                     print(f"Return code from database insert: {db_utils.insert_canary_issue(entry)}", file=sys.stderr, flush=False)
                 else:
                     print(f"squad:{squad} is a duplicate of issue {dup}.", file=sys.stderr, flush=False)
-                    db_utils.bump_dup_count(dup, _sh)
         db_utils.disconnect_from_db()
 
     def open_github_issue_per_squad(self, _tags, squad):
