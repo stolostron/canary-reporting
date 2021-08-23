@@ -36,3 +36,6 @@ for f in $1/*; do
         process_canary "$f"
     fi
 done
+if [ -d "$1" ]; then
+    process_canary "$1"
+fi
