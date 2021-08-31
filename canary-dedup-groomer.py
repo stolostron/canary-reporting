@@ -36,7 +36,7 @@ except UnknownObjectException as ex:
     print(ex)
     exit(1)
 
-ret = db_utils.pull_open_defects()
+ret = db_utils.pull_open_defects(github_repo)
 if ret != None:
     open_defects = list(ret)
     for row in open_defects:
@@ -44,7 +44,7 @@ if ret != None:
         defect = list(row)[1]
         status = query_github_status(int(defect))
         if (status != "open") and (status != None):
-            db_utils.update_status(id,status)
+            db_utils.update_status(id, status, repo)
 else:
     print("No open defects!")
 ret = db_utils.disconnect_from_db()
