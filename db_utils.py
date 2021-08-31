@@ -6,7 +6,10 @@ import sys
 import pymysql
 from datetime import datetime
 
-TABLE_NAME = "canary_issues"
+# repo_to_table() defines which one will be used
+TABLE_NAME_INTEGRATION = "canary_issues"
+TABLE_NAME_STAGING = "canary_issues_staging"
+
 c = None
 conn = None
 
@@ -47,13 +50,17 @@ def connect_to_db():
         squad_tag text, \
         payload text, \
         dup_count int, \
-        PRIMARY KEY (id))".format(TABLE_NAME)
-    c.execute(sql)
+        PRIMARY KEY (id))"
+    sql1 = sql.format(TABLE_NAME_STAGING)
+    c.execute(sql1)
+    sql1 = sql.format(TABLE_NAME_INTEGRATION)
+    c.execute(sql1)
 
-def payload_exists(payload_string, snapshot):
-    global conn, c, TABLE_NAME
+def payload_exists(payload_string, snapshot, repo):
+    global conn, c
     payload = sanitize_payload(payload_string)
     dup = None
+    TABLE_NAME=repo_to_table(repo)
 
     sql = "SELECT id, github_id, first_date, last_date, first_snapshot, last_snapshot, dup_count FROM {} WHERE payload = \"{}\" AND status = \"open\";".format(TABLE_NAME,payload)
     num_rows = c.execute(sql)
@@ -108,16 +115,17 @@ def payload_exists(payload_string, snapshot):
 
     return dup
 
-def update_status(real_id, status):
-    global conn, c, TABLE_NAME
+def update_status(real_id, status, repo):
+    global conn, c
+    TABLE_NAME = repo_to_table(repo)
     sql = "UPDATE {} SET status = \"{}\" WHERE id = \"{}\";".format(TABLE_NAME, status, real_id)
     return_code = c.execute(sql)
     conn.commit()
-    print("SQL: {} Update db id {} to status {}: {}".format(sql, real_id,status,return_code))
     return return_code
 
-def insert_canary_issue(issue):
-    global conn, c, TABLE_NAME
+def insert_canary_issue(issue, repo):
+    global conn, c
+    TABLE_NAME = repo_to_table(repo)
     import_details_string = issue['import_cluster_details']
     import_details = "{}".format(import_details_string)
     import_details = import_details.replace('"', '""')
@@ -162,13 +170,21 @@ def snapshot_to_date(snapshot):
     datetime_object = datetime.strptime(iso_date, '%Y-%m-%d %H:%M:%S')
     return datetime_object
 
-def pull_open_defects():
+def pull_open_defects(repo):
+    global conn, c
+    TABLE_NAME = repo_to_table(repo)
     sql = "SELECT id, github_id FROM {}  WHERE status != \"closed\";".format(TABLE_NAME)
     num_rows = c.execute(sql)
     if (num_rows > 0):
         return c.fetchall()
     else:
         return None
+
+def repo_to_table(repo):
+    if ("backlog" == repo):
+        return TABLE_NAME_INTEGRATION
+    else:
+        return TABLE_NAME_STAGING
  
 def disconnect_from_db():
     conn.commit()

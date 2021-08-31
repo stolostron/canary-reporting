@@ -278,7 +278,7 @@ Example Usages:
             if len(_flat_issue_set) > 0:
                 # Iterate through db, see if issue exists already
                 _sh = "Unknown" if self.snapshot == None else self.snapshot
-                dup = db_utils.payload_exists(_flat_issue_set, _sh)
+                dup = db_utils.payload_exists(_flat_issue_set, _sh, self.github_repo[0])
                 if dup == None:
                     # Get a local copy of tags they want us to add
                     _tags = self.tags.copy()
@@ -294,7 +294,7 @@ Example Usages:
                     _hv = "Unknown" if self.hub_version == None else self.hub_version
                     _hp = "Unknown" if self.hub_platform == None else self.hub_platform
                     entry = {"github_id":github_id, "first_snapshot":_sh, "hub_version":_hv, "hub_platform":_hp, "import_cluster_details":self.import_cluster_details, "status":"open","severity":GitHubIssueGenerator.severities[_highest_sev],"priority":GitHubIssueGenerator.priorities[_highest_pri],"date":_now,"squad_tag":"squad:{}".format(squad),"payload":_flat_issue_set}
-                    print(f"Return code from database insert: {db_utils.insert_canary_issue(entry)}", file=sys.stderr, flush=False)
+                    print(f"Return code from database insert: {db_utils.insert_canary_issue(entry, self.github_repo[0])}", file=sys.stderr, flush=False)
                 else:
                     print(f"squad:{squad} is a duplicate of issue {dup}.", file=sys.stderr, flush=False)
         db_utils.disconnect_from_db()

@@ -26,7 +26,7 @@ process_canary () {
         rm .icd.json
     else
         SNAPSHOT=`basename $BASE_PATH`
-        python3 reporter.py gh --dry-run $BASE_PATH -sn $SNAPSHOT -hv UNKNOWN -hp UNKNOWN 
+        python3 reporter.py gh --dry-run $BASE_PATH -sn $SNAPSHOT -hv UNKNOWN -hp UNKNOWN
     fi
 }
 
