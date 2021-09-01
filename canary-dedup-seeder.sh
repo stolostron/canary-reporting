@@ -22,7 +22,7 @@ process_canary () {
         MINUTE=$(echo $SNAPSHOT | awk -F"-" -s {'print $7'})
         SECOND=$(echo $SNAPSHOT | awk -F"-" -s {'print $8'})
         echo $CLUSTER_DETAILS > .icd.json
-        python3 reporter.py gh --dry-run $BASE_PATH -sn $SNAPSHOT -hv $HUB_VERSION -hp $HUB_PLATFORM -ic .icd.json
+        python3 reporter.py gh -nocd -psd $BASE_PATH -sn $SNAPSHOT -hv $HUB_VERSION -hp $HUB_PLATFORM -r cicd-staging -ic .icd.json
         rm .icd.json
     else
         SNAPSHOT=`basename $BASE_PATH`

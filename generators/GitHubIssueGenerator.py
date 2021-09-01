@@ -288,7 +288,6 @@ Example Usages:
                     github_id = self.open_github_issue_per_squad(_tags, squad)
                     if github_id == None:
                         github_id = "seed{}".format(randrange(100000,999999))
-                    print(f"Unique issue, adding github id {github_id} severity '{GitHubIssueGenerator.severities[_highest_sev]}' and priority '{GitHubIssueGenerator.priorities[_highest_pri]}' for squad:{squad}.", file=sys.stderr, flush=False)
                     # Needed because "Object of type datetime is not JSON serializable"
                     _now = "{}".format(datetime.utcnow())
                     _hv = "Unknown" if self.hub_version == None else self.hub_version
@@ -296,7 +295,7 @@ Example Usages:
                     entry = {"github_id":github_id, "first_snapshot":_sh, "hub_version":_hv, "hub_platform":_hp, "import_cluster_details":self.import_cluster_details, "status":"open","severity":GitHubIssueGenerator.severities[_highest_sev],"priority":GitHubIssueGenerator.priorities[_highest_pri],"date":_now,"squad_tag":"squad:{}".format(squad),"payload":_flat_issue_set}
                     print(f"Return code from database insert: {db_utils.insert_canary_issue(entry, self.github_repo[0])}", file=sys.stderr, flush=False)
                 else:
-                    print(f"squad:{squad} is a duplicate of issue {dup}.", file=sys.stderr, flush=False)
+                    print("squad:{} test failures are a duplicate of github issue {}.".format(squad, dup))
         db_utils.disconnect_from_db()
 
     def open_github_issue_per_squad(self, _tags, squad):
@@ -328,7 +327,7 @@ Example Usages:
                     pass
             _issue_title = "{}:{}".format(self.generate_issue_title(),squad)
             _issue = repo.create_issue(_issue_title, body=_message, labels=_github_tags_objects, assignees=_assignees)
-            print(_issue.html_url)
+            print("squad:{} opened issue URL: {}".format(squad, _issue.html_url))
             return _issue.number
         else:
             print(f"--dry-run or --no-per-squad-defect has been set, skipping squad's git issue creation", file=sys.stderr, flush=False)
