@@ -211,7 +211,7 @@ Example Usages:
         _metadata = _metadata + "\n"
         # Include github issue processing information if available
         if self.issue_url is not None:
-            _metadata = _metadata + f"*Issue generation information:* {self.issue_url}\n"
+            _metadata = _metadata + f"*Issue generation information:*\n{self.issue_url}\n"
         return _metadata
 
 
