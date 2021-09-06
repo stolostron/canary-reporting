@@ -242,6 +242,7 @@ Example Usages:
 
     
     def open_github_issues(self):
+        defectCreated = False
         # Connect to our duplicate detection database
         db_utils.connect_to_db()
 
@@ -294,9 +295,12 @@ Example Usages:
                     _hp = "Unknown" if self.hub_platform == None else self.hub_platform
                     entry = {"github_id":github_id, "first_snapshot":_sh, "hub_version":_hv, "hub_platform":_hp, "import_cluster_details":self.import_cluster_details, "status":"open","severity":GitHubIssueGenerator.severities[_highest_sev],"priority":GitHubIssueGenerator.priorities[_highest_pri],"date":_now,"squad_tag":"squad:{}".format(squad),"payload":_flat_issue_set}
                     print(f"Return code from database insert: {db_utils.insert_canary_issue(entry, self.github_repo[0])}", file=sys.stderr, flush=False)
+                    defectCreated = True
                 else:
-                    print("squad:{} test failures are a duplicate of github issue {}.".format(squad, dup))
+                    print("*squad:{}* test failures are a duplicate of github issue {}.".format(squad, dup))
         db_utils.disconnect_from_db()
+        if defectCreated == False:
+            print("*No defect(s) created due to duplicate detection*")
 
     def open_github_issue_per_squad(self, _tags, squad):
         """Macro function to assemble and open GitHub Issues, one per squad.  This wraps the title, body, and tag assembly and issue generation."""
@@ -327,7 +331,7 @@ Example Usages:
                     pass
             _issue_title = "{}:{}".format(self.generate_issue_title(),squad)
             _issue = repo.create_issue(_issue_title, body=_message, labels=_github_tags_objects, assignees=_assignees)
-            print("squad:{} opened issue URL: {}".format(squad, _issue.html_url))
+            print("*squad:{}* opened issue URL: {}".format(squad, _issue.html_url))
             return _issue.number
         else:
             print(f"--dry-run or --no-per-squad-defect has been set, skipping squad's git issue creation", file=sys.stderr, flush=False)
