@@ -300,7 +300,7 @@ Example Usages:
                     print("*squad:{}* test failures are a duplicate of github issue {}.".format(squad, dup))
         db_utils.disconnect_from_db()
         if defectCreated == False:
-            print("*No defect(s) created due to duplicate detection*")
+            print("*No defect(s) created due to duplicate detection* :im-helping:")
 
     def open_github_issue_per_squad(self, _tags, squad):
         """Macro function to assemble and open GitHub Issues, one per squad.  This wraps the title, body, and tag assembly and issue generation."""
