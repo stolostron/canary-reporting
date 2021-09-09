@@ -20,6 +20,19 @@ def query_github_status(defect):
     return issue_state
 
 #
+# Do we have the things we need?
+#
+if github_token == None:
+    print("Required environment variable GITHUB_TOKEN missing")
+    exit(1)
+if github_org == None:
+    print("Required environment variable GITHUB_ORG missing (likely candidate: open-cluster-management)")
+    exit(1)
+if github_repo == None:
+    print("Required environment variable GITHUB_REPO missing (likely candidates: backlog or canary-staging)")
+    exit(1)
+
+#
 # Get conneted to the Database
 #
 ret = db_utils.connect_to_db()
@@ -36,15 +49,24 @@ except UnknownObjectException as ex:
     print(ex)
     exit(1)
 
+print("Connected to {}/{}, pulling defects".format(github_org,github_repo))
 ret = db_utils.pull_open_defects(github_repo)
 if ret != None:
     open_defects = list(ret)
+    print("{} open defects in the database, checking for GitHub status".format(len(open_defects)))
+    changed = False
     for row in open_defects:
         id = list(row)[0]
         defect = list(row)[1]
         status = query_github_status(int(defect))
         if (status != "open") and (status != None):
-            db_utils.update_status(id, status, repo)
+            rc = db_utils.update_status(id, status, github_repo)
+            print("Updating defect {} to status {} returns: {}".format(defect,status,rc))
+            if rc == 1:
+                changed = True
+    if changed == False:
+        print("No changes made.")
+    print("Processing complete.")
 else:
     print("No open defects!")
 ret = db_utils.disconnect_from_db()
