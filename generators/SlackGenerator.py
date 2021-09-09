@@ -209,9 +209,9 @@ Example Usages:
             elif import_cluster['platform']:
                 _metadata = _metadata + f"• *Import Cluster Platform:* {import_cluster['platform']}\n"
         _metadata = _metadata + "\n"
-        # Include a link to the git issue where available
+        # Include github issue processing information if available
         if self.issue_url is not None:
-            _metadata = _metadata + f"*Opened Issue URL:* {self.issue_url}\n"
+            _metadata = _metadata + f"*Issue generation information:*\n{self.issue_url}\n"
         return _metadata
 
 
