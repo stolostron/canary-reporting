@@ -324,7 +324,7 @@ Example Usages:
                     pass
             for tag in _tags:
                 try:
-                    if "squad:{}".format(tag) in self.assigneelist:
+                    if tag in self.assigneelist:
                         _assignees.append(GitHubIssueGenerator.get_user(org, self.assigneelist[tag]))
                 except UnknownObjectException as ex:
                     print(f"No user for {tag}, skipping and continuing.", file=sys.stderr, flush=False)
