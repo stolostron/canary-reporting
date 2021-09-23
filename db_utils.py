@@ -170,10 +170,10 @@ def snapshot_to_date(snapshot):
     datetime_object = datetime.strptime(iso_date, '%Y-%m-%d %H:%M:%S')
     return datetime_object
 
-def pull_open_defects(repo):
+def pull_open_defects(repo, days_grace):
     global conn, c
     TABLE_NAME = repo_to_table(repo)
-    sql = "SELECT id, github_id FROM {}  WHERE status != \"closed\";".format(TABLE_NAME)
+    sql = "SELECT id, github_id FROM {}  WHERE status != \"closed\" AND ( first_date < NOW() - INTERVAL {} DAY AND last_date < NOW() - INTERVAL {} DAY );".format(TABLE_NAME, days_grace, days_grace)
     num_rows = c.execute(sql)
     if (num_rows > 0):
         return c.fetchall()
