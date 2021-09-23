@@ -58,15 +58,15 @@ if ret != None:
     open_defects = list(ret)
     print("{} open defects in the database, checking for GitHub status".format(len(open_defects)))
     changed = False
-    #for row in open_defects:
-    #    id = list(row)[0]
-    #    defect = list(row)[1]
-    #    status = query_github_status(int(defect))
-    #    if (status != "open") and (status != None):
-    #        rc = db_utils.update_status(id, status, github_repo)
-    #        print("Updating defect {} to status {} returns: {}".format(defect,status,rc))
-    #        if rc == 1:
-    #            changed = True
+    for row in open_defects:
+        id = list(row)[0]
+        defect = list(row)[1]
+        status = query_github_status(int(defect))
+        if (status != "open") and (status != None):
+            rc = db_utils.update_status(id, status, github_repo)
+            print("Updating defect {} to status {} returns: {}".format(defect,status,rc))
+            if rc == 1:
+                changed = True
     if changed == False:
         print("No changes made.")
     print("Processing complete.")
