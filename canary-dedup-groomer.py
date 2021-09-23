@@ -11,6 +11,9 @@ conn = None
 github_token=os.getenv('GITHUB_TOKEN')
 github_org=os.getenv('GITHUB_ORG')
 github_repo=os.getenv('GITHUB_REPO')
+days_grace=os.getenv('CANARY_DEDUP_GRACE_DAYS')
+if days_grace == None:
+    days_grace = 2
 
 def query_github_status(defect):
     try:
@@ -49,8 +52,8 @@ except UnknownObjectException as ex:
     print(ex)
     exit(1)
 
-print("Connected to {}/{}, pulling defects".format(github_org,github_repo))
-ret = db_utils.pull_open_defects(github_repo)
+print("Connected to {}/{}, pulling defects with grace period of {} days".format(github_org,github_repo,days_grace))
+ret = db_utils.pull_open_defects(github_repo, days_grace)
 if ret != None:
     open_defects = list(ret)
     print("{} open defects in the database, checking for GitHub status".format(len(open_defects)))
