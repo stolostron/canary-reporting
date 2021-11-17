@@ -10,7 +10,7 @@ import os, re, argparse, json, pprint, github, shutil
 class SnapshotDiffGenerator(AbstractGenerator.AbstractGenerator):
 
     skipped_repos = [
-        "open-cluster-management/example-cicd-component"
+        "ocmplus/example-cicd-component"
     ]
 
     nullary_element = {
@@ -25,7 +25,7 @@ class SnapshotDiffGenerator(AbstractGenerator.AbstractGenerator):
     }
 
     def __init__(self, base, base_repo_type, new, new_repo_type, base_timestamp=None, new_timestamp=None, base_product_version=None, new_product_version=None, github_token=None, 
-                    github_org='open-cluster-management', github_repo='pipeline', load_commits=True):
+                    github_org='ocmplus', github_repo='pipeline', load_commits=True):
         """Create a SnapshotDiffGenerator Object, populate the diff, and conditionally load GitHub artifacts.  
 
         Required Arguments:
