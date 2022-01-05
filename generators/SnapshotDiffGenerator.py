@@ -10,7 +10,7 @@ import os, re, argparse, json, pprint, github, shutil
 class SnapshotDiffGenerator(AbstractGenerator.AbstractGenerator):
 
     skipped_repos = [
-        "ocmplus/example-cicd-component"
+        "stolostron/example-cicd-component"
     ]
 
     nullary_element = {
@@ -25,7 +25,7 @@ class SnapshotDiffGenerator(AbstractGenerator.AbstractGenerator):
     }
 
     def __init__(self, base, base_repo_type, new, new_repo_type, base_timestamp=None, new_timestamp=None, base_product_version=None, new_product_version=None, github_token=None, 
-                    github_org='ocmplus', github_repo='pipeline', load_commits=True):
+                    github_org='stolostron', github_repo='pipeline', load_commits=True):
         """Create a SnapshotDiffGenerator Object, populate the diff, and conditionally load GitHub artifacts.  
 
         Required Arguments:
@@ -138,8 +138,8 @@ Example Usages:
             help="Path to a file where the computed snapshot diff should be output.  If ommitted, the diff will be logged to the stdout.")
         sd_parser.add_argument('-o', '--output-type', choices=['json', 'markdown', 'md', 'sha', 'default'],
             help="Output format.  Options include JSON, Markdown, component-sha list, and user-friendly terminal output.")
-        sd_parser.add_argument('-org', '--github-org', default='open-cluster-management',
-            help="Name of the GitHub organization to pull manifests from.  Defaults to 'open-cluster-management'.")
+        sd_parser.add_argument('-org', '--github-org', default='stolostron',
+            help="Name of the GitHub organization to pull manifests from.  Defaults to 'stolostron'.")
         sd_parser.add_argument('-r', '--github-repo', default='pipeline',
             help="Name of the GitHub repo to pull manifests from.  Defaults to 'pipeline'.")
         sd_parser.add_argument('--github-token', default=os.getenv('GITHUB_TOKEN'),
