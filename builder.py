@@ -56,7 +56,7 @@ def populate_db(json_file):
         if d['failed'] == 0:
             d['issue_url'] = ''
         else:
-            d['issue_url'] = 'https://github.com/open-cluster-management/backlog/issues'
+            d['issue_url'] = 'https://github.com/stolostron/backlog/issues'
     c.execute("SELECT * FROM snapshots WHERE id=%s AND acm_release=%s AND hub_platform=%s", (d['snapshot'], release, d['hub_platform']))
     if c.fetchone() is None:
         add_snapshot_to_db(d, date_time_obj, release)
