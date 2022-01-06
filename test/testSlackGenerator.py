@@ -55,7 +55,8 @@ class TestSlackGenerator(unittest.TestCase):
 • *Import Cluster Platform:* aws    *Import Cluster Version:* 4.7.0
 • *Import Cluster Platform:* gcp    *Import Cluster Version:* 4.7.1
 
-*Opened Issue URL:* TEST_ISSUE_URL
+*Issue generation information:*
+TEST_ISSUE_URL
 
 *Quality Gates (100% ; 100%):*
 :red_jenkins_circle:*92.31% Executed ; 75.0% Passing*
@@ -138,7 +139,8 @@ https://on.cypress.io/element-cannot-be-interacted-with
 • *Import Cluster Platform:* aws    *Import Cluster Version:* 4.7.0
 • *Import Cluster Platform:* gcp    *Import Cluster Version:* 4.7.1
 
-*Opened Issue URL:* TEST_ISSUE_URL
+*Issue generation information:*
+TEST_ISSUE_URL
 
 *Quality Gates (100% ; 100%):*
 :red_jenkins_circle:*92.31% Executed ; 75.0% Passing*
