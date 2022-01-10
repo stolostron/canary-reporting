@@ -61,7 +61,7 @@ class GitHubIssueGenerator(AbstractGenerator.AbstractGenerator, ReportGenerator.
     def __init__(self, results_dirs, snapshot=None, branch=None, stage=None, hub_version=None, 
         hub_platform=None, import_cluster_details=[], job_url=None, build_id=None,
         sd_url=None, md_url=None, must_gather_url=None, results_url=None, ignorelist=[], assigneelist={},
-        passing_quality_gate=100, executed_quality_gate=100, github_token=os.getenv('GITHUB_TOKEN'), github_org=["open-cluster-management"],
+        passing_quality_gate=100, executed_quality_gate=100, github_token=os.getenv('GITHUB_TOKEN'), github_org=["stolostron"],
         github_repo=["cicd-staging"], tags=[], dry_run=True, output_file="github.md",
         consolidated_defect=True, persquad_defect=False):
         """Create a GitHubIssueGenerator Object, unroll xml files from input, and initialize a ResultsAggregator.  
@@ -156,8 +156,8 @@ Example Usages:
     Generate the above report with some tags:
         python3 reporter.py gh junit_xml/ --github-organization=test_org --repo=test_repo --github-token=<YOUR_GITHUB_TOKEN> -t "blocker (P0)" -t "canary-failure" -t "Severity 1 - Urgent" -t "bug"
 """)
-        gh_parser.add_argument('--github-organization', nargs=1, default=["open-cluster-management"],
-            help="GitHub organization to open an issue against if a failing test is detected.  Defaults to open-cluster-management.")
+        gh_parser.add_argument('--github-organization', nargs=1, default=["stolostron"],
+            help="GitHub organization to open an issue against if a failing test is detected.  Defaults to stolostron.")
         gh_parser.add_argument('-r', '--repo', nargs=1, default=["backlog"],
             help="GitHub repo to open an issue against if a failing test is detected.  Defaults to 'backlog'.")
         gh_parser.add_argument('--github-token', default=os.getenv('GITHUB_TOKEN'),
