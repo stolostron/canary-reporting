@@ -46,7 +46,7 @@ class TestBuilder(unittest.TestCase):
         processed_results['id'] = _df['snapshot']
         processed_results['stage'] = _df['stage']
         processed_results['branch'] = _df['branch']
-        processed_results['verificiation_level'] = _df['verification_level']
+        processed_results['verification_level'] = _df['verification_level']
         processed_results['issue_url'] = _df['issue_url']
         processed_results['time'] = "SNAPSHOT_TIME"
         processed_results['acm_release'] = "SNAPSHOT_RELEASE"
