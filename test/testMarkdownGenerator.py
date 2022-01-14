@@ -23,6 +23,7 @@ class TestMarkdownGenerator(unittest.TestCase):
             [TestMarkdownGenerator.results_folder],
             snapshot="TEST_SNAPSHOT",
             branch="TEST_BRANCH",
+            verification_level="BVT",
             stage="TEST_STAGE",
             hub_version="TEST_HUB_VERSION",
             hub_platform="TEST_HUB_PLATFORM",
@@ -45,7 +46,7 @@ class TestMarkdownGenerator(unittest.TestCase):
             ignorelist=[]
         )
         _md_report = _md_generator.generate_markdown_report()
-        self.assertEqual(_md_report, """# :red_circle:TEST_SNAPSHOT Failed on branch Test_stage
+        self.assertEqual(_md_report, """# :red_circle:TEST_SNAPSHOT Failed BVT on branch Test_stage
 ## Job URL: TEST_JOB_URL
 ## Artifacts & Details
 [**Snapshot Diff**](TEST_SD_URL)
@@ -144,6 +145,7 @@ https://on.cypress.io/element-cannot-be-interacted-with
             [TestMarkdownGenerator.results_folder],
             snapshot="TEST_SNAPSHOT",
             branch="TEST_BRANCH",
+            verification_level="BVT",
             stage="TEST_STAGE",
             hub_version="TEST_HUB_VERSION",
             hub_platform="TEST_HUB_PLATFORM",
@@ -166,7 +168,7 @@ https://on.cypress.io/element-cannot-be-interacted-with
             ignorelist=TestMarkdownGenerator.ignorelist
         )
         _md_report = _md_generator.generate_markdown_report()
-        self.assertEqual(_md_report, """# :red_circle:TEST_SNAPSHOT Failed on branch Test_stage
+        self.assertEqual(_md_report, """# :red_circle:TEST_SNAPSHOT Failed BVT on branch Test_stage
 ## Job URL: TEST_JOB_URL
 ## Artifacts & Details
 [**Snapshot Diff**](TEST_SD_URL)
@@ -263,7 +265,7 @@ https://on.cypress.io/element-cannot-be-interacted-with
     def test_markdown_report_min(self):
         _md_generator = MarkdownGenerator.MarkdownGenerator([TestMarkdownGenerator.results_folder])
         _md_report = _md_generator.generate_markdown_report()
-        self.assertEqual(_md_report, """# :red_circle: Failed
+        self.assertEqual(_md_report, """# :red_circle: Failed Verification Test
 ## Artifacts & Details
 
 
