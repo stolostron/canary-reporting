@@ -232,7 +232,7 @@ Example Usages:
             _import_cluster["version"] = args.import_version if args.import_version else ""
             _import_cluster["platform"] = args.import_platform if args.import_platform else ""
             _import_cluster_details.append(_import_cluster)
-        _verification_level = "BVT" if re.findall(".*-integration\b", args.branch) else "SVT" if re.findall(".*-dev\b", args.branch) else "SVT-Extended" if re.findall(".*-nightly\b" ,args.branch) else "Verification Test"
+        _verification_level = "BVT" if re.match(".*-integration\b", args.branch) else "SVT" if re.match(".*-dev\b", args.branch) else "SVT-Extended" if re.match(".*-nightly\b" ,args.branch) else "Verification Test"
         _generator = GitHubIssueGenerator(args.results_directory, snapshot=args.snapshot, branch=args.branch, verification_level=_verification_level, stage=args.stage,
             hub_version=args.hub_version, hub_platform=args.hub_platform,
             import_cluster_details=_import_cluster_details, job_url=args.job_url, build_id=args.build_id, ignorelist=_ignorelist, assigneelist=_assigneelist,
@@ -440,7 +440,7 @@ Example Usages:
         _header = ""
         if self.branch is not None:
             _header = _header + f"[{self.branch.capitalize()}] "
-        _header = _header + f"{self.verification_level.capitalize()} Failure"
+        _header = _header + f"CICD {self.verification_level} Failure"
         if self.snapshot is not None:
             _header = _header + f" for {self.snapshot}"
         if self.stage is not None:

@@ -138,7 +138,7 @@ Example Usages:
             _import_cluster["version"] = args.import_version if args.import_version else ""
             _import_cluster["platform"] = args.import_platform if args.import_platform else ""
             _import_cluster_details.append(_import_cluster)
-        _verification_level = "BVT" if re.findall(".*-integration\b", args.branch) else "SVT" if re.findall(".*-dev\b", args.branch) else "SVT-Extended" if re.findall(".*-nightly\b" ,args.branch) else "Verification Test"
+        _verification_level = "BVT" if re.match(".*-integration\b", args.branch) else "SVT" if re.match(".*-dev\b", args.branch) else "SVT-Extended" if re.match(".*-nightly\b" ,args.branch) else "Verification Test"
         _generator = SlackGenerator(args.results_directory, snapshot=args.snapshot, branch=args.branch, verification_level=_verification_level, stage=args.stage,
             hub_version=args.hub_version, hub_platform=args.hub_platform, import_cluster_details=_import_cluster_details,
             job_url=args.job_url, build_id=args.build_id, ignorelist=_ignorelist, md_url=args.markdown_url, sd_url=args.snapshot_diff_url,
@@ -176,7 +176,8 @@ Example Usages:
         _header = f"{SlackGenerator.header_symbols[_status]}"
         if self.snapshot is not None:
             _header = _header + self.snapshot
-        _header = _header + f" {_status.capitalize()} {self.verification_level.capitalize()}"
+        _verification_level = self.verification_level if self.verification_level is not None else "Verification Test"
+        _header = _header + f" {_status.capitalize()} {_verification_level}"
         if self.stage is not None:
             _header = _header + f" on branch {self.stage.capitalize()}"
         return f"*{_header}*"

@@ -57,7 +57,7 @@ class TestGitHubIssueGenerator(unittest.TestCase):
         _gh_generator.open_github_issue()
         with open(TestGitHubIssueGenerator.output_file, "r+") as f:
             _gh_report = f.read()
-        self.assertEqual(_gh_report, """# :red_circle:TEST_SNAPSHOT Failed BVT on branch Test_stage
+        self.assertEqual(_gh_report, """# :red_circle:TEST_SNAPSHOT Failed on branch Test_stage
 ## Job URL: TEST_JOB_URL
 ## Artifacts & Details
 [**Must-Gather Bucket**](TEST_MUST_GATHER_URL)
@@ -170,7 +170,7 @@ https://on.cypress.io/element-cannot-be-interacted-with
         _gh_generator.open_github_issue()
         with open(TestGitHubIssueGenerator.output_file, "r+") as f:
             _gh_report = f.read()
-        self.assertEqual(_gh_report, """# :red_circle:TEST_SNAPSHOT Failed BVT on branch Test_stage
+        self.assertEqual(_gh_report, """# :red_circle:TEST_SNAPSHOT Failed on branch Test_stage
 ## Job URL: TEST_JOB_URL
 ## Artifacts & Details
 [**Must-Gather Bucket**](TEST_MUST_GATHER_URL)
@@ -257,7 +257,7 @@ https://on.cypress.io/element-cannot-be-interacted-with
         _gh_report = _gh_generator.open_github_issue()
         with open(TestGitHubIssueGenerator.output_file, "r+") as f:
             _gh_report = f.read()
-        self.assertEqual(_gh_report, """# :red_circle: Failed Verification Test
+        self.assertEqual(_gh_report, """# :red_circle: Failed
 ## Artifacts & Details
 
 

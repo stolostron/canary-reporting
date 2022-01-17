@@ -109,7 +109,7 @@ Example Usage:
             }
             _import_cluster_details["version"] = args.import_version if args.import_version else ""
             _import_cluster_details["platform"] = args.import_platform if args.import_platform else ""
-        _verification_level = "BVT" if re.findall(".*-integration\b", args.branch) else "SVT" if re.findall(".*-dev\b", args.branch) else "SVT-Extended" if re.findall(".*-nightly\b" ,args.branch) else "Verification Test"
+        _verification_level = "BVT" if re.match(".*-integration\b", args.branch) else "SVT" if re.match(".*-dev\b", args.branch) else "SVT-Extended" if re.match(".*-nightly\b" ,args.branch) else "Verification Test"
         _generator = JsonGenerator(args.results_directory, snapshot=args.snapshot, branch=args.branch, verification_level=_verification_level, stage=args.stage,
             hub_version=args.hub_version, hub_platform=args.hub_platform,
             import_cluster_details=_import_cluster_details, job_url=args.job_url, build_id=args.build_id, ignorelist=_ignorelist,

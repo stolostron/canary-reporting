@@ -163,7 +163,8 @@ Example Usages:
         _header = f"# {MarkdownGenerator.header_symbols[_status]}"
         if self.snapshot is not None:
             _header = _header + self.snapshot
-        _header = _header + f" {_status.capitalize()} {self.verification_level.capitalize()}"
+        _verification_level = self.verification_level if self.verification_level is not None else "Verification Test"
+        _header = _header + f" {_status.capitalize()} {_verification_level}"
         if self.stage is not None:
             _header = _header + f" on branch {self.stage.capitalize()}"
         return _header
