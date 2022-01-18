@@ -98,7 +98,6 @@ class GitHubIssueGenerator(AbstractGenerator.AbstractGenerator, ReportGenerator.
         """
         self.snapshot = snapshot
         self.branch = branch
-        self.verification_level = verification_level
         self.stage = stage
         self.hub_version = hub_version
         self.hub_platform = hub_platform
@@ -122,6 +121,12 @@ class GitHubIssueGenerator(AbstractGenerator.AbstractGenerator, ReportGenerator.
         self.output_file = output_file
         self.consolidated_defect = consolidated_defect
         self.persquad_defect = persquad_defect
+        if verification_level is not None:
+            self.verification_level = verification_level
+        elif branch is None:
+            self.verification_level = "Verification Test"
+        else:
+            self.verification_level = "BVT" if re.match(r".*-integration\b", branch) else "SVT" if re.match(r".*-dev\b", branch) else "SVT-Extended" if re.match(r".*-nightly\b" ,branch) else "Verification Test"
         for _results_dir in results_dirs:
             _files_list = os.listdir(_results_dir)
             for _f in _files_list:
@@ -232,8 +237,7 @@ Example Usages:
             _import_cluster["version"] = args.import_version if args.import_version else ""
             _import_cluster["platform"] = args.import_platform if args.import_platform else ""
             _import_cluster_details.append(_import_cluster)
-        _verification_level = "BVT" if re.match(".*-integration\b", args.branch) else "SVT" if re.match(".*-dev\b", args.branch) else "SVT-Extended" if re.match(".*-nightly\b" ,args.branch) else "Verification Test"
-        _generator = GitHubIssueGenerator(args.results_directory, snapshot=args.snapshot, branch=args.branch, verification_level=_verification_level, stage=args.stage,
+        _generator = GitHubIssueGenerator(args.results_directory, snapshot=args.snapshot, branch=args.branch, verification_level=args.verification_level, stage=args.stage,
             hub_version=args.hub_version, hub_platform=args.hub_platform,
             import_cluster_details=_import_cluster_details, job_url=args.job_url, build_id=args.build_id, ignorelist=_ignorelist, assigneelist=_assigneelist,
             sd_url=args.snapshot_diff_url, md_url=args.markdown_url, executed_quality_gate=int(args.executed_quality_gate), passing_quality_gate=int(args.passing_quality_gate),

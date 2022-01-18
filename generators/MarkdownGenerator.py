@@ -57,7 +57,6 @@ class MarkdownGenerator(AbstractGenerator.AbstractGenerator, ReportGenerator.Rep
         """
         self.snapshot = snapshot
         self.branch = branch
-        self.verification_level = verification_level
         self.stage = stage
         self.hub_version = hub_version
         self.hub_platform = hub_platform
@@ -70,6 +69,12 @@ class MarkdownGenerator(AbstractGenerator.AbstractGenerator, ReportGenerator.Rep
         self.passing_quality_gate = passing_quality_gate
         self.executed_quality_gate = executed_quality_gate
         self.results_files = []
+        if verification_level is not None:
+            self.verification_level = verification_level
+        elif branch is None:
+            self.verification_level = "Verification Test"
+        else:
+            self.verification_level = "BVT" if re.match(r".*-integration\b", branch) else "SVT" if re.match(r".*-dev\b", branch) else "SVT-Extended" if re.match(r".*-nightly\b" ,branch) else "Verification Test"
         for _results_dir in results_dirs:
             _files_list = os.listdir(_results_dir)
             for _f in _files_list:
@@ -133,8 +138,7 @@ Example Usages:
             _import_cluster["version"] = args.import_version if args.import_version else ""
             _import_cluster["platform"] = args.import_platform if args.import_platform else ""
             _import_cluster_details.append(_import_cluster)
-        _verification_level = "BVT" if re.findall(".*-integration\b", args.branch) else "SVT" if re.findall(".*-dev\b", args.branch) else "SVT-Extended" if re.findall(".*-nightly\b" ,args.branch) else "Verification Test"
-        _generator = MarkdownGenerator(args.results_directory, snapshot=args.snapshot, branch=args.branch, verification_level=_verification_level, stage=args.stage,
+        _generator = MarkdownGenerator(args.results_directory, snapshot=args.snapshot, branch=args.branch, verification_level=args.verification_level, stage=args.stage,
             hub_version=args.hub_version, hub_platform=args.hub_platform, import_cluster_details=_import_cluster_details,
             job_url=args.job_url, build_id=args.build_id, ignorelist=_ignorelist, sd_url=args.snapshot_diff_url,
             issue_url=args.issue_url, executed_quality_gate=int(args.executed_quality_gate), passing_quality_gate=int(args.passing_quality_gate))
@@ -163,8 +167,7 @@ Example Usages:
         _header = f"# {MarkdownGenerator.header_symbols[_status]}"
         if self.snapshot is not None:
             _header = _header + self.snapshot
-        _verification_level = self.verification_level if self.verification_level is not None else "Verification Test"
-        _header = _header + f" {_status.capitalize()} {_verification_level}"
+        _header = _header + f" {_status.capitalize()} {self.verification_level}"
         if self.stage is not None:
             _header = _header + f" on branch {self.stage.capitalize()}"
         return _header
