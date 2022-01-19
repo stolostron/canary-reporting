@@ -36,10 +36,10 @@ def connect_to_db():
 
 #inintalize test database
 def populate_db(json_file):
-    c.execute("CREATE TABLE IF NOT EXISTS snapshots (id text, time datetime, acm_release varchar(10), verification_level text, \
+    c.execute("CREATE TABLE IF NOT EXISTS snapshots_staging (id text, time datetime, acm_release varchar(10), verification_level text, \
         test_total int, passes integer, fails int, skips int, ignored int, hub_platform varchar(10), hub_version varchar(10), \
         stage varchar(20), branch varchar(20), issue_url text)")
-    c.execute("CREATE TABLE IF NOT EXISTS squad_tests (id text, time datetime, acm_release varchar(10), verification_level text, \
+    c.execute("CREATE TABLE IF NOT EXISTS squad_tests_staging (id text, time datetime, acm_release varchar(10), verification_level text, \
         `squad(s)` varchar(50), testsuite varchar(200), passes int, fails int, skips int, ignored int, severity text, priority text, \
         hub_platform varchar(10), hub_version varchar(10), stage varchar(20), branch varchar(20), issue_url text)")
     data = json_file.read()
@@ -57,17 +57,17 @@ def populate_db(json_file):
             d['issue_url'] = ''
         else:
             d['issue_url'] = 'https://github.com/stolostron/backlog/issues'
-    c.execute("SELECT * FROM snapshots WHERE id=%s AND acm_release=%s AND hub_platform=%s", (d['snapshot'], release, d['hub_platform']))
+    c.execute("SELECT * FROM snapshots_staging WHERE id=%s AND acm_release=%s AND hub_platform=%s", (d['snapshot'], release, d['hub_platform']))
     if c.fetchone() is None:
         add_snapshot_to_db(d, date_time_obj, release, d['verification_level'])
-    c.execute("SELECT * FROM squad_tests WHERE id=%s AND acm_release=%s AND hub_platform=%s", (d['snapshot'], release, d['hub_platform']))
+    c.execute("SELECT * FROM squad_tests_staging WHERE id=%s AND acm_release=%s AND hub_platform=%s", (d['snapshot'], release, d['hub_platform']))
     if c.fetchone() is None:
         add_tests_to_db(d, date_time_obj, release, d['verification_level'])
     conn.commit()
 
 #function to read in json to database
 def add_snapshot_to_db(json_data, date, release, verification_level):
-    c.execute("INSERT into snapshots values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+    c.execute("INSERT into snapshots_staging values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
                   [json_data['snapshot'], date, release, verification_level, 
                    json_data['total'], json_data['passed'], json_data['failed'], json_data['skipped'], json_data['ignored'], json_data['hub_platform'], json_data['hub_version'], json_data['stage'], json_data['branch'], json_data['issue_url']])
 
@@ -94,7 +94,7 @@ def add_tests_to_db(json_data, date, release, verification_level):
     branch_idx = squad_test_df.columns.get_loc("branch")
     issue_idx = squad_test_df.columns.get_loc("issue_url")
     for row in squad_test_df.itertuples():
-        c.execute("INSERT into squad_tests values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", 
+        c.execute("INSERT into squad_tests_staging values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", 
                  [row[snapshot_idx+1], date, release, verification_level, row[squad_idx+1], row[testsuite_idx+1], row[pass_idx+1], row[fail_idx+1], 
                   row[skip_idx+1], row[ignore_idx+1], row[severity_idx+1], row[priority_idx+1], row[hub_p_idx+1], row[hub_v_idx+1], row[stage_idx+1], row[branch_idx+1], row[issue_idx+1]])
     
