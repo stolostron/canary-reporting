@@ -143,7 +143,11 @@ Example Usages:
             _import_cluster["version"] = args.import_version if args.import_version else ""
             _import_cluster["platform"] = args.import_platform if args.import_platform else ""
             _import_cluster_details.append(_import_cluster)
-        _generator = SlackGenerator(args.results_directory, snapshot=args.snapshot, branch=args.branch, verification_level=args.verification_level, stage=args.stage,
+        if args.verification_level is not None:
+            _verification_level = args.verification_level
+        else:
+            _verification_level = "BVT" if re.match(r".*-integration\b", args.branch) else "SVT" if re.match(r".*-dev\b", args.branch) else "SVT-Extended" if re.match(r".*-nightly\b" , args.branch) else "Verification Test"
+        _generator = SlackGenerator(args.results_directory, snapshot=args.snapshot, branch=args.branch, verification_level=_verification_level, stage=args.stage,
             hub_version=args.hub_version, hub_platform=args.hub_platform, import_cluster_details=_import_cluster_details,
             job_url=args.job_url, build_id=args.build_id, ignorelist=_ignorelist, md_url=args.markdown_url, sd_url=args.snapshot_diff_url,
             issue_url=args.issue_url, executed_quality_gate=int(args.executed_quality_gate), passing_quality_gate=int(args.passing_quality_gate))
