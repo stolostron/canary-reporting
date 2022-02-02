@@ -4,7 +4,7 @@ An AbstractGenerator and ReportGenerator implementation to generate a markdown r
 This class can generate its CLI parser, load args, generate a ResultsAggregator object, and format the output data as a md report. 
 """
 
-import os, sys, json, argparse, itertools, db_utils
+import os, sys, json, argparse, itertools, db_utils, re
 from github import Github, UnknownObjectException
 from generators import AbstractGenerator,ReportGenerator
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
@@ -58,7 +58,7 @@ class GitHubIssueGenerator(AbstractGenerator.AbstractGenerator, ReportGenerator.
         "Priority/P3"
     ]
 
-    def __init__(self, results_dirs, snapshot=None, branch=None, stage=None, hub_version=None, 
+    def __init__(self, results_dirs, snapshot=None, branch=None, verification_level=None, stage=None, hub_version=None, 
         hub_platform=None, import_cluster_details=[], job_url=None, build_id=None,
         sd_url=None, md_url=None, must_gather_url=None, results_url=None, ignorelist=[], assigneelist={},
         passing_quality_gate=100, executed_quality_gate=100, github_token=os.getenv('GITHUB_TOKEN'), github_org=["stolostron"],
@@ -72,6 +72,7 @@ class GitHubIssueGenerator(AbstractGenerator.AbstractGenerator, ReportGenerator.
         Keyword Arguments:
         snapshot    --  a string representation of the snapshot that these test results represent, ex. 2.2.0-SNAPSHOT-timestamp
         branch      --  a string representaiton of the integration test branch that generated the xml results, ex. 2.2-integration
+        verification_level  --  the level of verification testing that this report was generated on
         stage       --  a string representaiton of the integration test stage/step that generated the xml results, ex deploy
         hub_version     --  a string representation of the hub cluster version that was tested
         hub_platform    --  a string representation of the hub cluster's hosting cloud platform
@@ -120,6 +121,12 @@ class GitHubIssueGenerator(AbstractGenerator.AbstractGenerator, ReportGenerator.
         self.output_file = output_file
         self.consolidated_defect = consolidated_defect
         self.persquad_defect = persquad_defect
+        if verification_level is not None:
+            self.verification_level = verification_level
+        elif branch is None:
+            self.verification_level = "Verification Test"
+        else:
+            self.verification_level = "BVT" if re.match(r".*-integration\b", branch) else "SVT" if re.match(r".*-dev\b", branch) else "SVT-Extended" if re.match(r".*-nightly\b" ,branch) else "Verification Test"
         for _results_dir in results_dirs:
             _files_list = os.listdir(_results_dir)
             for _f in _files_list:
@@ -230,7 +237,11 @@ Example Usages:
             _import_cluster["version"] = args.import_version if args.import_version else ""
             _import_cluster["platform"] = args.import_platform if args.import_platform else ""
             _import_cluster_details.append(_import_cluster)
-        _generator = GitHubIssueGenerator(args.results_directory, snapshot=args.snapshot, branch=args.branch, stage=args.stage,
+        if args.verification_level is not None:
+            _verification_level = args.verification_level
+        else:
+            _verification_level = "BVT" if re.match(r".*-integration\b", args.branch) else "SVT" if re.match(r".*-dev\b", args.branch) else "SVT-Extended" if re.match(r".*-nightly\b" , args.branch) else "Verification Test"
+        _generator = GitHubIssueGenerator(args.results_directory, snapshot=args.snapshot, branch=args.branch, verification_level=_verification_level, stage=args.stage,
             hub_version=args.hub_version, hub_platform=args.hub_platform,
             import_cluster_details=_import_cluster_details, job_url=args.job_url, build_id=args.build_id, ignorelist=_ignorelist, assigneelist=_assigneelist,
             sd_url=args.snapshot_diff_url, md_url=args.markdown_url, executed_quality_gate=int(args.executed_quality_gate), passing_quality_gate=int(args.passing_quality_gate),
@@ -437,7 +448,7 @@ Example Usages:
         _header = ""
         if self.branch is not None:
             _header = _header + f"[{self.branch.capitalize()}] "
-        _header = _header + f"CICD Canary Build Failure"
+        _header = _header + f"CICD {self.verification_level} Failure"
         if self.snapshot is not None:
             _header = _header + f" for {self.snapshot}"
         if self.stage is not None:
