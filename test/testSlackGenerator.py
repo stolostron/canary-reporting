@@ -23,6 +23,7 @@ class TestSlackGenerator(unittest.TestCase):
             [TestSlackGenerator.results_folder],
             snapshot="TEST_SNAPSHOT",
             branch="TEST_BRANCH",
+            verification_level="BVT",
             stage="TEST_STAGE",
             hub_version="TEST_HUB_VERSION",
             hub_platform="TEST_HUB_PLATFORM",
@@ -45,7 +46,7 @@ class TestSlackGenerator(unittest.TestCase):
             md_url="TEST_MD_URL"
         )
         _sl_report = _sl_generator.generate_slack_report()
-        self.assertEqual(_sl_report, """*:red_circle:TEST_SNAPSHOT Failed on branch Test_stage*
+        self.assertEqual(_sl_report, """*:red_circle:TEST_SNAPSHOT Failed BVT on branch Test_stage*
 *Job URL:* TEST_JOB_URL
 *Results Markdown:* TEST_MD_URL
 *Snapshot Diff:* TEST_SD_URL
@@ -106,6 +107,7 @@ https://on.cypress.io/element-cannot-be-interacted-with
             [TestSlackGenerator.results_folder],
             snapshot="TEST_SNAPSHOT",
             branch="TEST_BRANCH",
+            verification_level="BVT",
             stage="TEST_STAGE",
             hub_version="TEST_HUB_VERSION",
             hub_platform="TEST_HUB_PLATFORM",
@@ -129,7 +131,7 @@ https://on.cypress.io/element-cannot-be-interacted-with
             ignorelist=TestSlackGenerator.ignorelist
         )
         _sl_report = _sl_generator.generate_slack_report()
-        self.assertEqual(_sl_report, """*:red_circle:TEST_SNAPSHOT Failed on branch Test_stage*
+        self.assertEqual(_sl_report, """*:red_circle:TEST_SNAPSHOT Failed BVT on branch Test_stage*
 *Job URL:* TEST_JOB_URL
 *Results Markdown:* TEST_MD_URL
 *Snapshot Diff:* TEST_SD_URL
@@ -185,7 +187,7 @@ https://on.cypress.io/element-cannot-be-interacted-with
     def test_slack_report_min(self):
         _sl_generator = SlackGenerator.SlackGenerator([TestSlackGenerator.results_folder])
         _sl_report = _sl_generator.generate_slack_report()
-        self.assertEqual(_sl_report, """*:red_circle: Failed*
+        self.assertEqual(_sl_report, """*:red_circle: Failed Verification Test*
 
 
 *Quality Gates (100% ; 100%):*
