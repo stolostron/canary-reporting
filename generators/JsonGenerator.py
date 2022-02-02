@@ -4,14 +4,15 @@ An AbstractGenerator and ReportGenerator implementation to generate a raw JSON p
 This class can generate its CLI parser, load args, generate a ResultsAggregator object, and format the output data as a raw JSON payload. 
 """
 
-import os, sys, json, argparse
+import os, sys, json, argparse, re
+from re import findall
 from generators import AbstractGenerator,ReportGenerator
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 from datamodel import ResultsAggregator as ra
 
 class JsonGenerator(AbstractGenerator.AbstractGenerator, ReportGenerator.ReportGenerator):
 
-    def __init__(self, results_dirs, snapshot=None, branch=None, stage=None, hub_version=None, 
+    def __init__(self, results_dirs, snapshot=None, branch=None, verification_level=None, stage=None, hub_version=None, 
         hub_platform=None, import_cluster_details=[], job_url=None, build_id=None,
         issue_url=None, ignorelist=[], passing_quality_gate=100, executed_quality_gate=100):
         """Create a JsonGenerator Object, unroll xml files from input, and initialize a ResultsAggregator.  
@@ -22,6 +23,7 @@ class JsonGenerator(AbstractGenerator.AbstractGenerator, ReportGenerator.ReportG
         Keyword Arguments:
         snapshot    --  a string representation of the snapshot that these test results represent, ex. 2.2.0-SNAPSHOT-timestamp
         branch      --  a string representaiton of the integration test branch that generated the xml results, ex. 2.2-integration
+        verification_level  --  the level of verification testing that this report was generated on
         stage       --  a string representaiton of the integration test stage/step that generated the xml results, ex deploy
         hub_version     --  a string representation of the hub cluster version that was tested
         hub_platform    --  a string representation of the hub cluster's hosting cloud platform
@@ -46,6 +48,12 @@ class JsonGenerator(AbstractGenerator.AbstractGenerator, ReportGenerator.ReportG
         self.passing_quality_gate = passing_quality_gate
         self.executed_quality_gate = executed_quality_gate
         self.results_files = []
+        if verification_level is not None:
+            self.verification_level = verification_level
+        elif branch is None:
+            self.verification_level = "Verification Test"
+        else:
+            self.verification_level = "BVT" if re.match(r".*-integration\b", branch) else "SVT" if re.match(r".*-dev\b", branch) else "SVT-Extended" if re.match(r".*-nightly\b" ,branch) else "Verification Test"
         for _results_dir in results_dirs:
             _files_list = os.listdir(_results_dir)
             for _f in _files_list:
@@ -106,7 +114,11 @@ Example Usage:
             }
             _import_cluster_details["version"] = args.import_version if args.import_version else ""
             _import_cluster_details["platform"] = args.import_platform if args.import_platform else ""
-        _generator = JsonGenerator(args.results_directory, snapshot=args.snapshot, branch=args.branch, stage=args.stage,
+        if args.verification_level is not None:
+            _verification_level = args.verification_level
+        else:
+            _verification_level = "BVT" if re.match(r".*-integration\b", args.branch) else "SVT" if re.match(r".*-dev\b", args.branch) else "SVT-Extended" if re.match(r".*-nightly\b" , args.branch) else "Verification Test"
+        _generator = JsonGenerator(args.results_directory, snapshot=args.snapshot, branch=args.branch, verification_level=_verification_level, stage=args.stage,
             hub_version=args.hub_version, hub_platform=args.hub_platform,
             import_cluster_details=_import_cluster_details, job_url=args.job_url, build_id=args.build_id, ignorelist=_ignorelist,
             issue_url=args.issue_url, executed_quality_gate=int(args.executed_quality_gate), passing_quality_gate=int(args.passing_quality_gate))
@@ -124,6 +136,7 @@ Example Usage:
         # Translate fields that our internal datamodel defaults to None to "" to make it more JSON-friendly
         _report["snapshot"] = self.snapshot if self.snapshot else ""
         _report["branch"] = self.branch if self.branch else ""
+        _report["verification_level"] = self.verification_level
         _report["stage"] = self.stage if self.branch else ""
         _report["hub_version"] = self.hub_version if self.hub_version else ""
         _report["hub_platform"] = self.hub_platform if self.hub_platform else ""

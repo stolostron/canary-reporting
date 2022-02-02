@@ -14,6 +14,7 @@ class TestBuilder(unittest.TestCase):
             [TestBuilder.results_folder],
             snapshot="TEST_SNAPSHOT",
             branch="TEST_BRANCH",
+            verification_level="BVT",
             stage="TEST_STAGE",
             hub_version="TEST_HUB_VERSION",
             hub_platform="TEST_HUB_PLATFORM",
@@ -45,10 +46,11 @@ class TestBuilder(unittest.TestCase):
         processed_results['id'] = _df['snapshot']
         processed_results['stage'] = _df['stage']
         processed_results['branch'] = _df['branch']
+        processed_results['verification_level'] = _df['verification_level']
         processed_results['issue_url'] = _df['issue_url']
-        processed_results['time'] = _df['snapshot']
-        processed_results['acm_release'] = _df['snapshot']
-        processed_results = processed_results[['id','time','acm_release','squad(s)','testsuite','passes','fails','skips','ignored','severity','priority','hub_platform','hub_version','stage','branch','issue_url']]
+        processed_results['time'] = "SNAPSHOT_TIME"
+        processed_results['acm_release'] = "SNAPSHOT_RELEASE"
+        processed_results = processed_results[['id','time','acm_release', 'verification_level','squad(s)','testsuite','passes','fails','skips','ignored','severity','priority','hub_platform','hub_version','stage','branch', 'issue_url']]
         _expected = pd.read_csv(f"{os.path.dirname(os.path.abspath(__file__))}/df.txt", delimiter="\t", dtype={'passes': pd.Int64Dtype(), 'fails': pd.Int64Dtype(), 'skips': pd.Int64Dtype(), 'ignored': pd.Int64Dtype()})
         pd.testing.assert_frame_equal(_expected, processed_results)
 

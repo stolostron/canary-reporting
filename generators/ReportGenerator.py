@@ -10,6 +10,8 @@ class ReportGenerator():
             help="The snapshot whose test results are represented in RESULTS_DIR. Attempts to load from the SNAPSHOT environment variable if omitted.")
         parent.add_argument('-b', '--branch', default=os.getenv('TRAVIS_BRANCH'),
             help="The name of the GitHub branch whose build failed. Attempts to load from the TRAVIS_BRANCH environment variable if omitted.")
+        parent.add_argument('-vl', '--verification-level', choices=['BVT', 'SVT', 'SVT-Extended', 'Verfication Test'],
+            help="The verification level of the ci test currently being reported on.")
         parent.add_argument('-st', '--stage', default=os.getenv('TRAVIS_BUILD_STAGE_NAME'),
             help="Name of the stage during which the build failed. Attempts to load from the TRAVIS_BUILD_STAGE_NAME environment variable if omitted.")
         parent.add_argument('-hv', '--hub-version', default=os.getenv('HUB_CLUSTER_VERSION'),
