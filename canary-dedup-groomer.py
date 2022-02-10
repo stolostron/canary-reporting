@@ -29,7 +29,7 @@ if github_token == None:
     print("Required environment variable GITHUB_TOKEN missing")
     exit(1)
 if github_org == None:
-    print("Required environment variable GITHUB_ORG missing (likely candidate: open-cluster-management)")
+    print("Required environment variable GITHUB_ORG missing (likely candidate: stolostron)")
     exit(1)
 if github_repo == None:
     print("Required environment variable GITHUB_REPO missing (likely candidates: backlog or canary-staging)")
@@ -61,12 +61,15 @@ if ret != None:
     for row in open_defects:
         id = list(row)[0]
         defect = list(row)[1]
-        status = query_github_status(int(defect))
-        if (status != "open") and (status != None):
-            rc = db_utils.update_status(id, status, github_repo)
-            print("Updating defect {} to status {} returns: {}".format(defect,status,rc))
-            if rc == 1:
-                changed = True
+        try:
+            status = query_github_status(int(defect))
+            if (status != "open") and (status != None):
+                rc = db_utils.update_status(id, status, github_repo)
+                print("Updating defect {} to status {} returns: {}".format(defect,status,rc))
+                if rc == 1:
+                    changed = True
+        except ValueError as ex:
+            print("Defect {} has a non-numeric identifier... skipping.".format(defect))
     if changed == False:
         print("No changes made.")
     print("Processing complete.")
