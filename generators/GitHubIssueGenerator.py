@@ -341,7 +341,7 @@ Example Usages:
                     print(f"No user for {tag}, skipping and continuing.", file=sys.stderr, flush=False)
                     pass
             _issue_title = "{}:{}".format(self.generate_issue_title(),squad)
-            _issue = repo.create_issue(_issue_title, body=_message, labels=_github_tags_objects, assignees=_assignees)
+            _issue = repo.create_issue(_issue_title, body=_message[:65535], labels=_github_tags_objects, assignees=_assignees)
             print("*squad:{}* opened issue URL: {}".format(squad, _issue.html_url))
             return _issue.number
         else:
@@ -387,7 +387,7 @@ Example Usages:
                 except UnknownObjectException as ex:
                     print(f"No user for {tag}, skipping and continuing.", file=sys.stderr, flush=False)
                     pass
-            _issue = repo.create_issue(self.generate_issue_title(), body=_message, labels=_github_tags_objects, assignees=_assignees)
+            _issue = repo.create_issue(self.generate_issue_title(), body=_message[:65535], labels=_github_tags_objects, assignees=_assignees)
             print(_issue.html_url)
         else:
             print(f"--dry-run or --no-consolidated-defect has been set, skipping consolidated git issue creation", file=sys.stderr, flush=False)
