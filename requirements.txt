@@ -1,4 +1,3 @@
-setuptools
 PyGithub
 untangle
 pandas
