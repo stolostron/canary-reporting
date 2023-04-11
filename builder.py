@@ -7,7 +7,7 @@ import sys
 import pymysql
 import pandas as pd
 import numpy as np
-from pandas.io.json import json_normalize
+from pandas import json_normalize
 
 
 c = None
