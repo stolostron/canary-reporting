@@ -308,11 +308,7 @@ Example Usages:
                     print(f"Return code from database insert: {db_utils.insert_canary_issue(entry, self.github_repo[0])}", file=sys.stderr, flush=False)
                     defectCreated = True
                 else:
-                    g = Github(self.github_token)
-                    org = g.get_organization(self.github_org[0])
-                    repo = org.get_repo(self.github_repo[0])
-                    issue = repo.get_issue(number=dup)
-                    print("*squad:{}* test failures are a duplicate of github issue {}.".format(squad, issue.html_url))
+                    print("*squad:{}* test failures are a duplicate of github issue {}.".format(squad, dup))
         db_utils.disconnect_from_db()
         if defectCreated == False:
             print("*No defect(s) created due to duplicate detection* :im-helping:")
